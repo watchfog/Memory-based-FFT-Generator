@@ -6,10 +6,10 @@ import scala.math._
 
 class FFTTwiddle extends RawModule with DataConfig{
     val io = IO(new Bundle {
-        val nk = Input(UInt(addrWidth.W))
-        val twiLutCaseIndex = Input(UInt(2.W))
-        val wR = Output(UInt(12.W))
-        val wI = Output(UInt(12.W))
+        val nk = Input(UInt())
+        val twiLutCaseIndex = Input(UInt())
+        val wR = Output(UInt())
+        val wI = Output(UInt())
     })
 
     def cosGen(k: Int): Seq[UInt] = {
@@ -44,9 +44,9 @@ class FFTTwiddle extends RawModule with DataConfig{
 
     val lut_w_i = twi_sin_tb1_p10(idx_i)
 
-    val chg_sign_flag_r = Mux((io.twi_lut_case_idx === 2.U), !lut_chg_sign_flag_r, lut_chg_sign_flag_r)
-    val chg_sign_flag_i = Mux((io.twi_lut_case_idx === 1.U), !lut_chg_sign_flag_i, lut_chg_sign_flag_i)
+    val chg_sign_flag_r = Mux((io.twiLutCaseIndex === 2.U), !lut_chg_sign_flag_r, lut_chg_sign_flag_r)
+    val chg_sign_flag_i = Mux((io.twiLutCaseIndex === 1.U), !lut_chg_sign_flag_i, lut_chg_sign_flag_i)
 
-    io.w_r := Mux(chg_sign_flag_r, (~lut_w_r + 1.U), lut_w_r)
-    io.w_i := Mux(chg_sign_flag_i, (~lut_w_i + 1.U), lut_w_i)
+    io.wR := Mux(chg_sign_flag_r, (~lut_w_r + 1.U), lut_w_r)
+    io.wI := Mux(chg_sign_flag_i, (~lut_w_i + 1.U), lut_w_i)
 }
