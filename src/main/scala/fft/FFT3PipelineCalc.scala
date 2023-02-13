@@ -20,8 +20,9 @@ class FFT3PipelineCalc extends Module with DataConfig{
 
         val rShiftSym = Input(Bool())
         val isFFT = Input(Bool())
-        val kernelState1c = Input(Bool())
-        val kernelState2c = Input(Bool())
+        val dataMode = Input(Bool())
+        val state1c = Input(Bool())
+        val state2c = Input(Bool())
     })
 
     val dataInSRRnd = Cat(io.dataInSR(fftDataWidth + 1), io.dataInSR(fftDataWidth + 1, 1)) + Cat(Fill(fftDataWidth + 1, 0.U), io.dataInSR(0))
@@ -46,12 +47,12 @@ class FFT3PipelineCalc extends Module with DataConfig{
     val wR1c = fftTwiddle.io.wR
     val wI1c = fftTwiddle.io.wI
 
-    val sR2c = ShiftRegister(dataInSR1c, 1, 0.U, io.kernelState1c)
-    val sI2c = ShiftRegister(dataInSI1c, 1, 0.U, io.kernelState1c)
-    val tR2c = ShiftRegister(dataInTR1c, 1, 0.U, io.kernelState1c)
-    val tI2c = ShiftRegister(dataInTI1c, 1, 0.U, io.kernelState1c)
-    val wR2c = ShiftRegister(Cat(wR1c, Fill(5, 0.U)), 1, 0.U, io.kernelState1c)
-    val wI2c = ShiftRegister(Cat(wI1c, Fill(5, 0.U)), 1, 0.U, io.kernelState1c)
+    val sR2c = ShiftRegister(dataInSR1c, 1, 0.U, io.state1c)
+    val sI2c = ShiftRegister(dataInSI1c, 1, 0.U, io.state1c)
+    val tR2c = ShiftRegister(dataInTR1c, 1, 0.U, io.state1c)
+    val tI2c = ShiftRegister(dataInTI1c, 1, 0.U, io.state1c)
+    val wR2c = ShiftRegister(Cat(wR1c, Fill(5, 0.U)), 1, 0.U, io.state1c)
+    val wI2c = ShiftRegister(Cat(wI1c, Fill(5, 0.U)), 1, 0.U, io.state1c)
 
     val addTRI = Cat(Fill(2, tR2c(fftDataWidth + 1)), tR2c) + Cat(Fill(2, tI2c(fftDataWidth + 1)), tI2c)
     val addWRI = Cat(wR2c(fftDataWidth + 2), wR2c) + Cat(wI2c(fftDataWidth + 2), wI2c)
@@ -67,14 +68,20 @@ class FFT3PipelineCalc extends Module with DataConfig{
     val multIPre = Cat(Fill(fftDataWidth + 3, tI2c(fftDataWidth + 1)), tI2c) * Cat(Fill(fftDataWidth + 2, wI2c(fftDataWidth + 2)), wI2c)
     val multI = multIPre(2 * (fftDataWidth + 2), 0)
 
-    val qR2c = Cat(multR(2 * (fftDataWidth + 2)), multR(2 * (fftDataWidth + 1), (fftDataWidth + 1))) - Cat(multI(2 * (fftDataWidth + 2)), multI(2 * (fftDataWidth + 1), (fftDataWidth + 1)))
-    val qI2c = Cat(multS(2 * (fftDataWidth + 3) + 1), multS(2 * (fftDataWidth + 1), (fftDataWidth + 1))) - Cat(multR(2 * (fftDataWidth + 2)), multR(2 * (fftDataWidth + 1), (fftDataWidth + 1))) - Cat(multI(2 * (fftDataWidth + 2)), multI(2 * (fftDataWidth + 1), (fftDataWidth + 1)))
+    val qR2cKernel = Cat(multR(2 * (fftDataWidth + 2)), multR(2 * (fftDataWidth + 1), (fftDataWidth + 1))) - Cat(multI(2 * (fftDataWidth + 2)), multI(2 * (fftDataWidth + 1), (fftDataWidth + 1)))
+    val qI2cKernel = Cat(multS(2 * (fftDataWidth + 3) + 1), multS(2 * (fftDataWidth + 1), (fftDataWidth + 1))) - Cat(multR(2 * (fftDataWidth + 2)), multR(2 * (fftDataWidth + 1), (fftDataWidth + 1))) - Cat(multI(2 * (fftDataWidth + 2)), multI(2 * (fftDataWidth + 1), (fftDataWidth + 1)))
 
-    val sR3c = ShiftRegister(sR2c, 1, 0.U, io.kernelState2c)
-    val sI3c = ShiftRegister(sI2c, 1, 0.U, io.kernelState2c)
+    val qR2cProc = Cat(tR2c(fftDataWidth + 1), tR2c)
+    val qI2cProc = ~Cat(tI2c(fftDataWidth + 1), tI2c) + 1.U
 
-    val qR3c = ShiftRegister(qR2c, 1, 0.U, io.kernelState2c)
-    val qI3c = ShiftRegister(qI2c, 1, 0.U, io.kernelState2c) 
+    val qR2c = Mux(io.dataMode, qR2cProc, qR2cKernel)
+    val qI2c = Mux(io.dataMode, qI2cProc, qI2cKernel)
+
+    val sR3c = ShiftRegister(sR2c, 1, 0.U, io.state2c)
+    val sI3c = ShiftRegister(sI2c, 1, 0.U, io.state2c)
+
+    val qR3c = ShiftRegister(qR2c, 1, 0.U, io.state2c)
+    val qI3c = ShiftRegister(qI2c, 1, 0.U, io.state2c) 
 
     val xR3cPre = Cat(Fill(2, sR3c(fftDataWidth + 1)), sR3c) + Cat(qR3c(fftDataWidth + 2), qR3c)
     val xI3cPre = Cat(Fill(2, sI3c(fftDataWidth + 1)), sI3c) + Cat(qI3c(fftDataWidth + 2), qI3c)

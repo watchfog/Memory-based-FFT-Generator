@@ -3,7 +3,7 @@ package fft
 import chisel3.util.log2Ceil
 
 trait DataConfig{
-    val fftLength = 256
+    val fftLength = 128
     val fftDataWidth = 14
     val parallelCnt = 3
     val addrWidth = log2Ceil(fftLength)

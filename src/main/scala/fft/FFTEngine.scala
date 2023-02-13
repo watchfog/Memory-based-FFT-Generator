@@ -23,7 +23,6 @@ class FFTEngine extends Module with DataConfig{
         val addrSram1Bank = Output(Vec(pow(2, parallelCnt).toInt, UInt((addrWidth - parallelCnt).W)))    
         
         val fftDone = Output(Bool())
-        val fftEnable = Input(Bool())
         val fftEngineKick = Input(Bool())
         val fftMode = Input(Bool())
 
@@ -128,9 +127,9 @@ class FFTEngine extends Module with DataConfig{
 
     val radixCountTemp = radixCount(radixCount.getWidth - 1 - 1, 0)
 
-    def myBitReverse(widthIn: Int, sel: Bool, in1: UInt, in2: UInt): Seq[Bool] = {
+    def myBitReverse(widthIn: Int, sel: Bool, in: UInt): Seq[Bool] = {
         val temp = (0 until widthIn by 1)
-            .map(i => Mux(sel, in1(widthIn - 1 - i), in2(i)))
+            .map(i => Mux(sel, in(widthIn - 1 - i), in(i)))
         temp
     }
 
@@ -217,8 +216,8 @@ class FFTEngine extends Module with DataConfig{
         }
     }
 
-    val addrS = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => VecInit(myBitReverse(addrWidth, true.B, addrSPre(i), addrSPre(i))).asUInt)
-    val addrT = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => VecInit(myBitReverse(addrWidth, true.B, addrTPre(i), addrTPre(i))).asUInt)
+    val addrS = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => VecInit(myBitReverse(addrWidth, true.B, addrSPre(i))).asUInt)
+    val addrT = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => VecInit(myBitReverse(addrWidth, true.B, addrTPre(i))).asUInt)
 
     def getBitSeqSum(dataIn: UInt, gap: Int, start: Int): UInt = {
         val sum = (start until dataIn.getWidth by gap).map(_.asUInt).fold(0.U(parallelCnt.W))((x, y) => x + dataIn(y))
@@ -255,16 +254,6 @@ class FFTEngine extends Module with DataConfig{
         } .otherwise {
             addrTBankSel(i) := (addrTBankSelPre(0) + (i.U << 1))(parallelCnt - 1, 0)
         }
-    }
-
-    val readAddrBank = WireDefault(VecInit(Seq.fill(pow(2, parallelCnt).toInt)(0.U((addrWidth - parallelCnt).W))))
-
-    for (i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-        readAddrBank(addrSBankSel(i)) := addrS(i)(addrWidth - parallelCnt - 1, 0)
-    }
-
-    for (i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-        readAddrBank(addrTBankSel(i)) := addrT(i)(addrWidth - parallelCnt - 1, 0)
     }
 
     io.readEnableSram0Bank := VecInit(Seq.fill(pow(2, parallelCnt).toInt)(readEnable & !srcBuffer))
@@ -318,8 +307,9 @@ class FFTEngine extends Module with DataConfig{
         fftCalc.io.nk := nk(i)
         fftCalc.io.rShiftSym := io.fftRShiftP0(phaseCount)
         fftCalc.io.isFFT := isFFT
-        fftCalc.io.kernelState1c := kernelState1c
-        fftCalc.io.kernelState2c := kernelState2c
+        fftCalc.io.dataMode := false.B
+        fftCalc.io.state1c := kernelState1c
+        fftCalc.io.state2c := kernelState2c
         val writeDataSPre = Cat(fftCalc.io.dataOutSI3c, fftCalc.io.dataOutSR3c)
         val writeDataTPre = Cat(fftCalc.io.dataOutTI3c, fftCalc.io.dataOutTR3c)
     
