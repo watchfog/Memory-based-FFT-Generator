@@ -42,9 +42,12 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
 
             def signalGenerator(n: Int): UInt = {
                 val t: Double = n * 2.0 * Pi / fftLength.toDouble
-                var temp = (1 * sin(t*4) + 0 * cos(t) + 2) * pow(2, 5)
-                var tempU = round(temp.abs).U(32.W)
-                fftRefIn(n) = new Complex(temp, 0)
+                var temp1 = (0 * sin((t*2)*4) + 0 * cos((t*2)) + 2) * pow(2, 6)
+                // var temp2 = (0 * sin((t*2+1)*4) + 0 * cos((t*2+1)) + 2) * pow(2, 6)
+                // var tempU = (round(temp2.abs) * pow(2, 16) + round(temp1.abs)).toLong.asUInt
+                // fftRefIn(n) = new Complex(temp1, temp2)
+                var tempU = (round(temp1.abs)).toLong.asUInt
+                fftRefIn(n) = new Complex(temp1, 0)
                 tempU
             }
 
@@ -320,10 +323,13 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 }
                 bankSel = radixSum & (pow(2, parallelCnt).toInt - 1)
                 bankAddr = radix & (pow(2, addrWidth - parallelCnt).toInt - 1)
-                sram0bank(bankSel)(bankAddr) = signalGenerator(radix)
+                // sram0bank(bankSel)(bankAddr) = signalGenerator(radix)
+                sram0bank(bankSel)(bankAddr) = 0.U
                 sram1bank(bankSel)(bankAddr) = 0.U
                 radixSum = 0
             }
+
+            sram0bank(0)(0) = (16384 * pow(2, 16) + 16384).toLong.asUInt
 
             var addrTemp = new Array[UInt](pow(2, parallelCnt).toInt)
             for(i <- 0 until pow(2, parallelCnt).toInt by 1) {

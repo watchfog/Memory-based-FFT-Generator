@@ -10,3 +10,11 @@ object emitEngine extends App {
       TargetDirAnnotation("Verilog"))
   )
 }
+
+object emitProc extends App { 
+  (new chisel3.stage.ChiselStage).execute(
+    Array("-X", "verilog", "--full-stacktrace"),
+    Seq(ChiselGeneratorAnnotation(() => new FFTDataProcess()),
+      TargetDirAnnotation("Verilog"))
+  )
+}

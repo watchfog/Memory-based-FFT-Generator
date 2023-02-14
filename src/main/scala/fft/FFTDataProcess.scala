@@ -187,6 +187,10 @@ class FFTDataProcess extends Module with DataConfig{
     val addrT2c = ShiftRegister(addrT1c, 1, 0.U, true.B)
     val addrT3c = ShiftRegister(addrT2c, 1, 0.U, true.B)
 
+    val sameAddr1c = ShiftRegister(sameAddr, 1, false.B, true.B)
+    val sameAddr2c = ShiftRegister(sameAddr1c, 1, false.B, true.B)
+    val sameAddr3c = ShiftRegister(sameAddr2c, 1, false.B, true.B)
+
     val dataInSR = Mux(srcBuffer, io.readDataSram1Bank(addrSBankSel1c)(fftDataWidth + 1, 0), io.readDataSram0Bank(addrSBankSel1c)(fftDataWidth + 1, 0))
     val dataInSI = Mux(srcBuffer, io.readDataSram1Bank(addrSBankSel1c)(2 * (fftDataWidth + 2) - 1, fftDataWidth + 2), io.readDataSram0Bank(addrSBankSel1c)(2 * (fftDataWidth + 2) - 1, fftDataWidth + 2))
 
@@ -195,9 +199,9 @@ class FFTDataProcess extends Module with DataConfig{
 
     val dataCalc = Module(new FFT3PipelineCalc)
     dataCalc.io.dataInSR := dataInSR
-    dataCalc.io.dataInSI := dataInSI
-    dataCalc.io.dataInTR := dataInTR
-    dataCalc.io.dataInTI := dataInTI
+    dataCalc.io.dataInSI := Mux(sameAddr1c && phaseCount === 1.U, 0.U, dataInSI)
+    dataCalc.io.dataInTR := Mux(sameAddr1c && phaseCount === 1.U, dataInTI, dataInTR)
+    dataCalc.io.dataInTI := Mux(sameAddr1c && phaseCount === 1.U, 0.U, dataInTI)
     dataCalc.io.nk := radixCount(addrWidth - 1, 0)
     dataCalc.io.rShiftSym := phaseCount(0)
     dataCalc.io.isFFT := isFFT
@@ -209,8 +213,15 @@ class FFTDataProcess extends Module with DataConfig{
     val writeDataTRPre = Mux(phaseCount === 1.U, dataCalc.io.dataOutTR3c, dataCalc.io.dataOutTI3c)
     val writeDataTIPre = Mux(phaseCount === 1.U, ~dataCalc.io.dataOutTI3c + 1.U, ~dataCalc.io.dataOutTR3c + 1.U)
 
-    val writeDataS = Cat(writeDataSIPre, writeDataSRPre)
-    val writeDataT = Cat(writeDataTIPre, writeDataTRPre)
+    val writeDataS = Wire(UInt())
+    val writeDataT = Wire(UInt())
+    when(sameAddr3c && phaseCount === 0.U) {
+        writeDataS := Cat(writeDataTRPre, writeDataSRPre) //G0 at real and H0 at image
+        writeDataT := Cat(writeDataTRPre, writeDataSRPre)
+    } .otherwise{
+        writeDataS := Cat(writeDataSIPre, writeDataSRPre)
+        writeDataT := Cat(writeDataTIPre, writeDataTRPre)
+    }
 
     for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
         when((i.U === addrSBankSel3c) || (i.U === addrTBankSel3c)) {
@@ -238,10 +249,10 @@ class FFTDataProcess extends Module with DataConfig{
         io.addrSram1Bank(addrTBankSel) := addrT(addrWidth - parallelCnt - 1, 0)
     }
 
-    io.writeDataSram0Bank(addrSBankSel3c) := writeDataS
     io.writeDataSram0Bank(addrTBankSel3c) := writeDataT
-    io.writeDataSram1Bank(addrSBankSel3c) := writeDataS
+    io.writeDataSram0Bank(addrSBankSel3c) := writeDataS //make S last connection so in sameaddr write out S
     io.writeDataSram1Bank(addrTBankSel3c) := writeDataT
+    io.writeDataSram1Bank(addrSBankSel3c) := writeDataS
 
     val donePre = (stateReg === procDone)
     val procDoneReg = RegNext(donePre, false.B)
