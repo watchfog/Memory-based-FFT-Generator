@@ -160,13 +160,9 @@ class FFTDataProcess extends Module with DataConfig{
     for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
         when((i.U === addrSBankSel) || (i.U === addrTBankSel)) {
             io.readEnableSram0Bank(i) := readEnable & !srcBuffer
-            io.readEnableSram0Bank(i) := readEnable & !srcBuffer
-            io.readEnableSram1Bank(i) := readEnable & srcBuffer
             io.readEnableSram1Bank(i) := readEnable & srcBuffer
         } .otherwise{
             io.readEnableSram0Bank(i) := false.B
-            io.readEnableSram0Bank(i) := false.B
-            io.readEnableSram1Bank(i) := false.B
             io.readEnableSram1Bank(i) := false.B
         }
     }
@@ -230,13 +226,9 @@ class FFTDataProcess extends Module with DataConfig{
     for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
         when((i.U === addrSBankSel3c) || (i.U === addrTBankSel3c)) {
             io.writeEnableSram0Bank(i) := srcBuffer & procState3c
-            io.writeEnableSram0Bank(i) := srcBuffer & procState3c
-            io.writeEnableSram1Bank(i) := !srcBuffer & procState3c
             io.writeEnableSram1Bank(i) := !srcBuffer & procState3c
         } .otherwise{
             io.writeEnableSram0Bank(i) := false.B
-            io.writeEnableSram0Bank(i) := false.B
-            io.writeEnableSram1Bank(i) := false.B
             io.writeEnableSram1Bank(i) := false.B
         }
     }

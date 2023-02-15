@@ -34,20 +34,24 @@ class FFTEngine extends Module with DataConfig{
     val FFTPhaseVal = stageCnt.U
     val FFTPhaseValM1 = (stageCnt - 1).U
 
-    val waitKick :: kernelPP :: kernelPPL :: kernelPPGap :: fftDone :: Nil = Enum(5)
+    val ProcCycleVal = (fftLength / 2 - 1).U
+    val ProcLatency = 3.U
+    val ProcPhaseVal = 1.U
+
+    val waitKick :: kernelPP :: kernelPPL :: kernelPPGap :: procPP :: procPPL :: procPPGap :: fftDone :: Nil = Enum(8)
 
     val isFFT = !io.fftMode
 
     val stateReg = RegInit(waitKick)
 
-    val radixCount = RegInit(0.U((log2Ceil(fftLength) - parallelCnt + 1).W))
+    val radixCount = RegInit(0.U((log2Ceil(fftLength)).W))
 
     val phaseCount = RegInit(0.U(log2Ceil(stageCnt + 1).W))
 
     switch(stateReg) {
         is(waitKick) {
             when(io.fftEngineKick) {
-                stateReg := kernelPP
+                stateReg := Mux(isFFT, kernelPP, procPP)
             } .otherwise {
                 stateReg := stateReg
             }
@@ -68,9 +72,30 @@ class FFTEngine extends Module with DataConfig{
         }
         is(kernelPPGap) {
             when(phaseCount === FFTPhaseVal) {
-                stateReg := fftDone
+                stateReg := Mux(isFFT, procPP, fftDone)
             } .otherwise{
                 stateReg := kernelPP
+            }
+        }
+        is(procPP) {
+            when(radixCount === ProcCycleVal) {
+                stateReg := procPPL
+            } .otherwise{
+                stateReg := stateReg
+            }
+        }
+        is(procPPL) {
+            when(radixCount === ProcLatency) {
+                stateReg := procPPGap
+            } .otherwise{
+                stateReg := stateReg
+            }
+        }
+        is(procPPGap) {
+            when(phaseCount === ProcPhaseVal) {
+                stateReg := Mux(isFFT, fftDone, kernelPP)
+            } .otherwise{
+                stateReg := procPP
             }
         }
         is(fftDone) {
@@ -82,9 +107,14 @@ class FFTEngine extends Module with DataConfig{
     ((stateReg === kernelPP) && (radixCount === FFTCycleVal)) |
     ((stateReg === kernelPPL) && (radixCount === FFTLatency)) |
     (stateReg === kernelPPGap) |
+    ((stateReg === procPP) && (radixCount === ProcCycleVal)) |
+    ((stateReg === procPPL) && (radixCount === ProcLatency)) |
+    (stateReg === procPPGap) |
     (stateReg === fftDone)
 
-    val radixUp = (stateReg === kernelPP) | (stateReg === kernelPPL)
+    val radixUp = (stateReg === kernelPP) | (stateReg === kernelPPL) |
+    (stateReg === procPP) | (stateReg === procPPL)
+
 
     when(radixInit) {
         radixCount := 0.U
@@ -96,9 +126,10 @@ class FFTEngine extends Module with DataConfig{
 
     val phaseInit = (stateReg === waitKick) |
     ((stateReg === kernelPPGap) & (phaseCount === FFTPhaseVal)) |
+    ((stateReg === procPPGap) & (phaseCount === ProcPhaseVal)) |
     (stateReg === fftDone)
 
-    val phaseUp = (stateReg === kernelPPGap)
+    val phaseUp = (stateReg === kernelPPGap) | (stateReg === procPPGap)
 
     when(phaseInit) {
         phaseCount := 0.U
@@ -110,9 +141,9 @@ class FFTEngine extends Module with DataConfig{
 
     val srcBuffer = RegInit(false.B)
 
-    val srcBufferNext = (stateReg === kernelPPGap) & !srcBuffer
+    val srcBufferNext = (stateReg === kernelPPGap | stateReg === procPPGap) & !srcBuffer
 
-    val srcUp = (stateReg === waitKick) | (stateReg === kernelPPGap)
+    val srcUp = (stateReg === waitKick) | (stateReg === kernelPPGap) | (stateReg === procPPGap)
 
     when(srcUp) {
         srcBuffer := srcBufferNext
@@ -121,22 +152,23 @@ class FFTEngine extends Module with DataConfig{
     }
 
     val kernelState = (stateReg === kernelPP)
+    val procState = (stateReg === procPP)
 
-    val readEnable = kernelState
+    val readEnable = kernelState | procState
 
     val radixCountTemp = radixCount(radixCount.getWidth - 1 - 1, 0)
 
-    def myBitReverse(widthIn: Int, sel: Bool, in: UInt): Seq[Bool] = {
+    def myBitReverse(widthIn: Int, sel: Bool, in: UInt): UInt = {
         val temp = (0 until widthIn by 1)
             .map(i => Mux(sel, in(widthIn - 1 - i), in(i)))
-        temp
+        VecInit(temp).asUInt
     }
 
     val nk = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
 
     if (parallelCnt == 1) {
         nk := (0 until pow(2, parallelCnt - 1).toInt).map(i => radixCount(radixCount.getWidth - 1 - 1, 0) & ~(Cat(0.U(1.W), VecInit(Seq.fill(stageCnt)(1.U(1.W))).asUInt) >> phaseCount))
-    } else if(parallelCnt == 2){
+    } else if(parallelCnt == 2) {
         when(phaseCount === FFTPhaseVal) {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
                 nk(i) := Cat(i.U, radixCount(radixCount.getWidth - 1 - 1, 0))
@@ -146,7 +178,7 @@ class FFTEngine extends Module with DataConfig{
                 nk(i) := Cat(radixCount(radixCount.getWidth - 1 - 1, 0), i.U((parallelCnt - 1).W)) & ~(Cat(0.U(1.W), VecInit(Seq.fill(stageCnt)(1.U(1.W))).asUInt) >> phaseCount)
             }
         }
-    } else {
+    } else if(parallelCnt == 3) {
         when(phaseCount === FFTPhaseVal) {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
                 nk(i) := Cat(i.U, radixCount(radixCount.getWidth - 1 - 1, 0))
@@ -177,109 +209,145 @@ class FFTEngine extends Module with DataConfig{
         dataTemp(data.getWidth - 1, 0)
     }
 
-    val addrSPre = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
-    val addrTPre = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrSKernelPre = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrTKernelPre = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
 
     if (parallelCnt == 1) {
-        addrSPre := (0 until 1 by 1).map(i => Cat(radixCountTemp, 0.U(1.W))).map(i => cyclicShiftL(i, phaseCount))
-        addrTPre := (0 until 1 by 1).map(i => Cat(radixCountTemp, 1.U(1.W))).map(i => cyclicShiftL(i, phaseCount))
+        addrSKernelPre := (0 until 1 by 1).map(i => Cat(radixCountTemp, 0.U(1.W))).map(i => cyclicShiftL(i, phaseCount))
+        addrTKernelPre := (0 until 1 by 1).map(i => Cat(radixCountTemp, 1.U(1.W))).map(i => cyclicShiftL(i, phaseCount))
     } else if(parallelCnt == 2){
         when(phaseCount === FFTPhaseVal) {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-                addrSPre(i) := Cat(0.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp)
-                addrTPre(i) := Cat(1.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp)
+                addrSKernelPre(i) := Cat(0.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp)
+                addrTKernelPre(i) := Cat(1.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp)
             }
         } .otherwise {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-                addrSPre(i) := cyclicShiftL(Cat(radixCountTemp, i.U((parallelCnt - 1).W), 0.U(1.W)), phaseCount)
-                addrTPre(i) := cyclicShiftL(Cat(radixCountTemp, i.U((parallelCnt - 1).W), 1.U(1.W)), phaseCount)
+                addrSKernelPre(i) := cyclicShiftL(Cat(radixCountTemp, i.U((parallelCnt - 1).W), 0.U(1.W)), phaseCount)
+                addrTKernelPre(i) := cyclicShiftL(Cat(radixCountTemp, i.U((parallelCnt - 1).W), 1.U(1.W)), phaseCount)
             }
         }
-    } else{
+    } else if(parallelCnt == 3){
         when(phaseCount === FFTPhaseVal) {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-                addrSPre(i) := Cat(0.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp)
-                addrTPre(i) := Cat(1.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp)
+                addrSKernelPre(i) := Cat(0.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp)
+                addrTKernelPre(i) := Cat(1.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp)
             }
         } .elsewhen(phaseCount === FFTPhaseValM1) {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-                addrSPre(i) := cyclicShiftR(Cat(0.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp), 1.U)
-                addrTPre(i) := cyclicShiftR(Cat(1.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp), 1.U)
+                addrSKernelPre(i) := cyclicShiftR(Cat(0.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp), 1.U)
+                addrTKernelPre(i) := cyclicShiftR(Cat(1.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp), 1.U)
             } 
         } .otherwise {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-                addrSPre(i) := cyclicShiftL(Cat(radixCountTemp, i.U((parallelCnt - 1).W), 0.U(1.W)), phaseCount)
-                addrTPre(i) := cyclicShiftL(Cat(radixCountTemp, i.U((parallelCnt - 1).W), 1.U(1.W)), phaseCount)
+                addrSKernelPre(i) := cyclicShiftL(Cat(radixCountTemp, i.U((parallelCnt - 1).W), 0.U(1.W)), phaseCount)
+                addrTKernelPre(i) := cyclicShiftL(Cat(radixCountTemp, i.U((parallelCnt - 1).W), 1.U(1.W)), phaseCount)
             }
         }
     }
 
-    val addrS = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => VecInit(myBitReverse(addrWidth, true.B, addrSPre(i))).asUInt)
-    val addrT = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => VecInit(myBitReverse(addrWidth, true.B, addrTPre(i))).asUInt)
+    val addrSProc = radixCount
+    val addrTProc = (~radixCount + 1.U)(addrWidth - 1, 0)
+
+    val addrS = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt((addrWidth - 1).W)))
+    val addrT = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt((addrWidth - 1).W)))
+    addrS(0) := Mux(procState, addrSProc, myBitReverse(addrWidth, true.B, addrSKernelPre(0)))
+    addrT(0) := Mux(procState, addrTProc, myBitReverse(addrWidth, true.B, addrTKernelPre(0)))
+    for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+        if(i == 0) {
+            addrS(i) := Mux(procState, addrSProc, myBitReverse(addrWidth, true.B, addrSKernelPre(i)))
+            addrT(i) := Mux(procState, addrTProc, myBitReverse(addrWidth, true.B, addrTKernelPre(i)))
+        } else {
+            addrS(i) := myBitReverse(addrWidth, true.B, addrSKernelPre(i))
+            addrT(i) := myBitReverse(addrWidth, true.B, addrSKernelPre(i))
+        }
+    }
+
+    val sameAddr = addrSProc === addrTProc
 
     def getBitSeqSum(dataIn: UInt, gap: Int, start: Int): UInt = {
         val sum = (start until dataIn.getWidth by gap).map(_.asUInt).fold(0.U(parallelCnt.W))((x, y) => x + dataIn(y))
         sum
     }
 
-    val addrSBankSelPrePre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => (0 until parallelCnt by 1).map(j => getBitSeqSum(addrS(i), parallelCnt, parallelCnt - 1 - j)))
+    val addrSBankSelKernelPrePre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => (0 until parallelCnt by 1).map(j => getBitSeqSum(addrS(i), parallelCnt, parallelCnt - 1 - j)))
 
-    val addrSBankSelPre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => addrSBankSelPrePre(i).fold(0.U)((x, y) => (x << 1) + y)).map(j => j(parallelCnt - 1, 0))
+    val addrSBankSelKernelPre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => addrSBankSelKernelPrePre(i).fold(0.U)((x, y) => (x << 1) + y)).map(j => j(parallelCnt - 1, 0))
 
-    val addrSBankSel = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrSBankSelKernel = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt(parallelCnt.W)))
 
-    addrSBankSel(0) := Mux(kernelState, addrSBankSelPre(0), 0.U)
+    val addrTBankSelKernelPrePre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => (0 until parallelCnt by 1).map(j => getBitSeqSum(addrT(i), parallelCnt, parallelCnt - 1 - j)))
+
+    val addrTBankSelKernelPre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => addrTBankSelKernelPrePre(i).fold(0.U)((x, y) => (x << 1) + y)).map(j => j(parallelCnt - 1, 0))
+
+    val addrTBankSelKernel = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt(parallelCnt.W)))
     
-    for (i <- 1 until pow(2, parallelCnt - 1).toInt by 1) {
+    for (i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
         when(kernelState) {
-            addrSBankSel(i) := addrSBankSelPre(i)
+            if(i == 0) {
+                addrSBankSelKernel(i) := 0.U
+                addrTBankSelKernel(i) := 1.U
+            } else {
+                addrSBankSelKernel(i) := addrSBankSelKernelPre(i)
+                addrTBankSelKernel(i) := addrTBankSelKernelPre(i)
+            }
         } .otherwise {
-            addrSBankSel(i) := (addrSBankSelPre(0) + (i.U << 1))(parallelCnt - 1, 0)
+            addrSBankSelKernel(i) := (i.U << 1)(parallelCnt - 1, 0)
+            addrSBankSelKernel(i) := (1.U + (i.U << 1))(parallelCnt - 1, 0)
         }
     }
 
-    val addrTBankSelPrePre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => (0 until parallelCnt by 1).map(j => getBitSeqSum(addrT(i), parallelCnt, parallelCnt - 1 - j)))
-
-    val addrTBankSelPre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => addrTBankSelPrePre(i).fold(0.U)((x, y) => (x << 1) + y)).map(j => j(parallelCnt - 1, 0))
-
-    val addrTBankSel = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
-
-    addrTBankSel(0) := Mux(kernelState, addrTBankSelPre(0), 1.U)
-    
-    for (i <- 1 until pow(2, parallelCnt - 1).toInt by 1) {
-        when(kernelState) {
-            addrTBankSel(i) := addrTBankSelPre(i)
-        } .otherwise {
-            addrTBankSel(i) := (addrTBankSelPre(0) + (i.U << 1))(parallelCnt - 1, 0)
-        }
+    val addrSBankSelProcPre = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    for(i <- 0 until parallelCnt) {
+        addrSBankSelProcPre(i) := addrS(i) ^ addrS(addrWidth - 1 - i)
     }
+    val addrSBankSelProc = addrSBankSelProcPre.reduce((x, y) => Cat(x, y))
 
-    io.readEnableSram0Bank := VecInit(Seq.fill(pow(2, parallelCnt).toInt)(readEnable & !srcBuffer))
-    io.readEnableSram1Bank := VecInit(Seq.fill(pow(2, parallelCnt).toInt)(readEnable & srcBuffer))
+    val addrTBankSelProcPre = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    for(i <- 0 until parallelCnt) {
+        addrTBankSelProcPre(i) := addrT(i) ^ addrT(addrWidth - 1 - i)
+    }
+    val addrTBankSelProc = addrTBankSelProcPre.reduce((x, y) => Cat(x, y))
 
-    val addrSBankSel1c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
-    val addrSBankSel2c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
-    val addrSBankSel3c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrSBankSelKernel1c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrSBankSelKernel2c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrSBankSelKernel3c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrTBankSelKernel1c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrTBankSelKernel2c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrTBankSelKernel3c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
 
     for (i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-        addrSBankSel1c(i) := ShiftRegister(addrSBankSel(i), 1, (i * 2).U, true.B)
-        addrSBankSel2c(i) := ShiftRegister(addrSBankSel1c(i), 1, (i * 2).U, true.B)
-        addrSBankSel3c(i) := ShiftRegister(addrSBankSel2c(i), 1, (i * 2).U, true.B)
+        addrSBankSelKernel1c(i) := ShiftRegister(addrSBankSelKernel(i), 1, (i * 2).U, true.B)
+        addrSBankSelKernel2c(i) := ShiftRegister(addrSBankSelKernel1c(i), 1, (i * 2).U, true.B)
+        addrSBankSelKernel3c(i) := ShiftRegister(addrSBankSelKernel2c(i), 1, (i * 2).U, true.B)
+        addrTBankSelKernel1c(i) := ShiftRegister(addrTBankSelKernel(i), 1, (i * 2 + 1).U, true.B)
+        addrTBankSelKernel2c(i) := ShiftRegister(addrTBankSelKernel1c(i), 1, (i * 2 + 1).U, true.B)
+        addrTBankSelKernel3c(i) := ShiftRegister(addrTBankSelKernel2c(i), 1, (i * 2 + 1).U, true.B)
     }
 
-    val addrTBankSel1c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
-    val addrTBankSel2c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
-    val addrTBankSel3c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
-
-    for (i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-        addrTBankSel1c(i) := ShiftRegister(addrTBankSel(i), 1, (i * 2 + 1).U, true.B)
-        addrTBankSel2c(i) := ShiftRegister(addrTBankSel1c(i), 1, (i * 2 + 1).U, true.B)
-        addrTBankSel3c(i) := ShiftRegister(addrTBankSel2c(i), 1, (i * 2 + 1).U, true.B)
-    }
+    val addrSBankSelProc1c = ShiftRegister(addrSBankSelProc, 1, 0.U, true.B)
+    val addrSBankSelProc2c = ShiftRegister(addrSBankSelProc1c, 1, 0.U, true.B)
+    val addrSBankSelProc3c = ShiftRegister(addrSBankSelProc2c, 1, 0.U, true.B)
+    val addrTBankSelProc1c = ShiftRegister(addrTBankSelProc, 1, 1.U, true.B)
+    val addrTBankSelProc2c = ShiftRegister(addrTBankSelProc1c, 1, 1.U, true.B)
+    val addrTBankSelProc3c = ShiftRegister(addrTBankSelProc2c, 1, 1.U, true.B)
 
     val kernelState1c = ShiftRegister(kernelState, 1, false.B, true.B)
     val kernelState2c = ShiftRegister(kernelState1c, 1, false.B, true.B)
     val kernelState3c = ShiftRegister(kernelState2c, 1, false.B, true.B)
+
+    val procState1c = ShiftRegister(procState, 1, false.B, true.B)
+    val procState2c = ShiftRegister(procState1c, 1, false.B, true.B)
+    val procState3c = ShiftRegister(procState2c, 1, false.B, true.B)
+
+    val sameAddr1c = ShiftRegister(sameAddr, 1, false.B, true.B)
+    val sameAddr2c = ShiftRegister(sameAddr1c, 1, false.B, true.B)
+    val sameAddr3c = ShiftRegister(sameAddr2c, 1, false.B, true.B)
+
+    for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
+        io.readEnableSram0Bank(i) := readEnable & !srcBuffer
+        io.readEnableSram1Bank(i) := readEnable & srcBuffer
+    }
 
     val dataInRPre = Wire(Vec(pow(2, parallelCnt).toInt, UInt()))
     val dataInIPre = Wire(Vec(pow(2, parallelCnt).toInt, UInt()))
@@ -288,6 +356,7 @@ class FFTEngine extends Module with DataConfig{
         dataInRPre(i) := Mux(srcBuffer, io.readDataSram1Bank(i)(fftDataWidth + 1, 0), io.readDataSram0Bank(i)(fftDataWidth + 1, 0))
         dataInIPre(i) := Mux(srcBuffer, io.readDataSram1Bank(i)(2 * (fftDataWidth + 2) - 1, fftDataWidth + 2), io.readDataSram0Bank(i)(2 * (fftDataWidth + 2) - 1, fftDataWidth + 2))
     }
+
     for (i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
         val addrS1c = ShiftRegister(addrS(i)(addrWidth - parallelCnt - 1, 0), 1, 0.U, true.B)
         val addrS2c = ShiftRegister(addrS1c, 1, 0.U, true.B)
@@ -297,41 +366,113 @@ class FFTEngine extends Module with DataConfig{
         val addrT2c = ShiftRegister(addrT1c, 1, 0.U, true.B)
         val addrT3c = ShiftRegister(addrT2c, 1, 0.U, true.B)
 
-        val fftCalc = Module(new FFT3PipelineCalc)
-        fftCalc.io.dataInSR := dataInRPre(addrSBankSel1c(i))
-        fftCalc.io.dataInSI := dataInIPre(addrSBankSel1c(i))
-        fftCalc.io.dataInTR := dataInRPre(addrTBankSel1c(i))
-        fftCalc.io.dataInTI := dataInIPre(addrTBankSel1c(i))
-        fftCalc.io.nk := Cat(nk(i)(addrWidth - 1 - 1, 0), 0.U(1.W))
-        fftCalc.io.rShiftSym := io.fftRShiftP0(phaseCount)
-        fftCalc.io.isFFT := isFFT
-        fftCalc.io.procMode := false.B
-        fftCalc.io.state1c := kernelState1c
-        fftCalc.io.state2c := kernelState2c
-        val writeDataSPre = Cat(fftCalc.io.dataOutSI3c, fftCalc.io.dataOutSR3c)
-        val writeDataTPre = Cat(fftCalc.io.dataOutTI3c, fftCalc.io.dataOutTR3c)
-    
-        io.writeEnableSram0Bank(addrSBankSel3c(i)) := srcBuffer & kernelState3c
-        io.writeEnableSram0Bank(addrTBankSel3c(i)) := srcBuffer & kernelState3c
-        io.writeEnableSram1Bank(addrSBankSel3c(i)) := !srcBuffer & kernelState3c
-        io.writeEnableSram1Bank(addrTBankSel3c(i)) := !srcBuffer & kernelState3c
+        val addrSBankSel = Wire(UInt())
+        val addrTBankSel = Wire(UInt())
 
-        when(srcBuffer === 0.U) {
-            io.addrSram0Bank(addrSBankSel(i)) := addrS(i)(addrWidth - parallelCnt - 1, 0)
-            io.addrSram0Bank(addrTBankSel(i)) := addrT(i)(addrWidth - parallelCnt - 1, 0)
-            io.addrSram1Bank(addrSBankSel3c(i)) := addrS3c
-            io.addrSram1Bank(addrTBankSel3c(i)) := addrT3c
-        } .otherwise {
-            io.addrSram0Bank(addrSBankSel3c(i)) := addrS3c
-            io.addrSram0Bank(addrTBankSel3c(i)) := addrT3c
-            io.addrSram1Bank(addrSBankSel(i)) := addrS(i)(addrWidth - parallelCnt - 1, 0)
-            io.addrSram1Bank(addrTBankSel(i)) := addrT(i)(addrWidth - parallelCnt - 1, 0)
+        if(i == 0) {
+            addrSBankSel := Mux(kernelState, addrSBankSelKernel(i), addrSBankSelProc)
+            addrTBankSel := Mux(kernelState, addrTBankSelKernel(i), addrTBankSelProc)
+        } else {
+            addrSBankSel := addrSBankSelKernel(i)
+            addrTBankSel := addrTBankSelKernel(i)
         }
 
-        io.writeDataSram0Bank(addrSBankSel3c(i)) := writeDataSPre
-        io.writeDataSram0Bank(addrTBankSel3c(i)) := writeDataTPre
-        io.writeDataSram1Bank(addrSBankSel3c(i)) := writeDataSPre
-        io.writeDataSram1Bank(addrTBankSel3c(i)) := writeDataTPre
+        val addrSBankSel1c = ShiftRegister(addrSBankSel, 1, 0.U, true.B)
+        val addrTBankSel1c = ShiftRegister(addrTBankSel, 1, 1.U, true.B)
+
+        val fftCalc = Module(new FFT3PipelineCalc)
+        fftCalc.io.dataInSR := dataInRPre(addrSBankSel1c)
+        fftCalc.io.dataInSI := Mux(sameAddr1c && phaseCount === 1.U, 0.U, dataInIPre(addrSBankSel1c))
+        fftCalc.io.dataInTR := Mux(sameAddr1c && phaseCount === 1.U, dataInIPre(addrTBankSel1c), dataInRPre(addrTBankSel1c))
+        fftCalc.io.dataInTI := Mux(sameAddr1c && phaseCount === 1.U, 0.U, dataInIPre(addrTBankSel1c))
+        fftCalc.io.nk := Mux(procState, radixCount(addrWidth - 1, 0), Cat(nk(i)(addrWidth - 1 - 1, 0), 0.U(1.W)))
+        fftCalc.io.rShiftSym := Mux(kernelState, io.fftRShiftP0(phaseCount), phaseCount(0))
+        fftCalc.io.isFFT := isFFT
+        fftCalc.io.procMode := (~phaseCount(0) && procState)
+        fftCalc.io.state1c := kernelState1c | procState1c
+        fftCalc.io.state2c := kernelState2c | procState2c
+        val writeDataSRPre = fftCalc.io.dataOutSR3c
+        val writeDataSIPre = fftCalc.io.dataOutSI3c
+        val writeDataTRPre = Mux(procState && phaseCount === 1.U, fftCalc.io.dataOutTR3c, fftCalc.io.dataOutTI3c)
+        val writeDataTIPre = Mux(procState && phaseCount === 1.U, ~fftCalc.io.dataOutTI3c + 1.U, ~fftCalc.io.dataOutTR3c + 1.U)
+    
+        val addrSBankSel3c = Wire(UInt())
+        val addrTBankSel3c = Wire(UInt())
+
+        if(i == 0) {
+            when(isFFT) {
+                addrSBankSel3c := Mux(procState3c | (kernelState3c && phaseCount === FFTPhaseVal), addrSBankSelKernel3c(i), addrSBankSelProc3c)
+                addrTBankSel3c := Mux(procState3c | (kernelState3c && phaseCount === FFTPhaseVal), addrTBankSelKernel3c(i), addrTBankSelProc3c)
+            } .otherwise {
+                addrSBankSel3c := Mux(procState3c && phaseCount === 0.U, addrSBankSelKernel3c(i), addrSBankSelProc3c)
+                addrTBankSel3c := Mux(procState3c && phaseCount === 0.U, addrTBankSelKernel3c(i), addrTBankSelProc3c)
+            }
+        } else {
+            addrSBankSel3c := addrSBankSelKernel3c(i)
+            addrTBankSel3c := addrTBankSelKernel3c(i)
+        }
+
+        for(j <- 0 until pow(2, parallelCnt).toInt by 1) {
+            when(procState3c){
+                when(i.U === 0.U) {
+                    when((j.U === addrSBankSel3c) || (j.U === addrTBankSel3c)) {
+                        io.writeEnableSram0Bank(j) := srcBuffer & procState3c
+                        io.writeEnableSram1Bank(j) := !srcBuffer & procState3c
+                    } .otherwise {
+                        io.writeEnableSram0Bank(j) := false.B
+                        io.writeEnableSram1Bank(j) := false.B
+                    }
+                }
+            } .otherwise {
+                io.writeEnableSram0Bank(j) := srcBuffer & kernelState3c
+                io.writeEnableSram1Bank(j) := !srcBuffer & kernelState3c
+            }
+        }
+
+        when(srcBuffer === 0.U) {
+            io.addrSram0Bank(addrSBankSel) := addrS(i)(addrWidth - parallelCnt - 1, 0)
+            io.addrSram0Bank(addrTBankSel) := addrT(i)(addrWidth - parallelCnt - 1, 0)
+            io.addrSram1Bank(addrSBankSel3c) := addrS3c
+            io.addrSram1Bank(addrTBankSel3c) := addrT3c
+        } .otherwise {
+            io.addrSram0Bank(addrSBankSel3c) := addrS3c
+            io.addrSram0Bank(addrTBankSel3c) := addrT3c
+            io.addrSram1Bank(addrSBankSel) := addrS(i)(addrWidth - parallelCnt - 1, 0)
+            io.addrSram1Bank(addrTBankSel) := addrT(i)(addrWidth - parallelCnt - 1, 0)
+        }
+
+        val writeDataS = Wire(UInt())
+        val writeDataT = Wire(UInt())
+        
+        when(sameAddr3c && phaseCount === 0.U) {
+            writeDataS := Cat(writeDataTRPre, writeDataSRPre) //G0 at real and H0 at image
+            writeDataT := Cat(writeDataTRPre, writeDataSRPre)
+        } .otherwise{
+            writeDataS := Cat(writeDataSIPre, writeDataSRPre)
+            writeDataT := Cat(writeDataTIPre, writeDataTRPre)
+        }
+
+        for(j <- 0 until pow(2, parallelCnt).toInt by 1) {
+            when(procState3c){
+                when(i.U === 0.U) {
+                    when(j.U === addrSBankSel3c) {
+                        io.writeDataSram0Bank(j) := writeDataS
+                        io.writeDataSram1Bank(j) := writeDataS
+                    } .elsewhen(j.U === addrTBankSel3c) {
+                        io.writeDataSram0Bank(j) := writeDataT
+                        io.writeDataSram1Bank(j) := writeDataT
+                    }
+                }
+            } .otherwise {
+                when(j.U === addrSBankSel3c) {
+                    io.writeDataSram0Bank(j) := writeDataS
+                    io.writeDataSram1Bank(j) := writeDataS
+                } .elsewhen(j.U === addrTBankSel3c) {
+                    io.writeDataSram0Bank(j) := writeDataT
+                    io.writeDataSram1Bank(j) := writeDataT
+                }
+            }
+        }
     }
 
     val donePre = (stateReg === fftDone)
