@@ -127,8 +127,8 @@ class FFTDataProcess extends Module with DataConfig{
         temp
     }
 
-    val addrS = VecInit(myBitReverse(addrWidth, true.B, radixCount)).asUInt
-    val addrT = VecInit(myBitReverse(addrWidth, true.B, (~radixCount + 1.U)(addrWidth - 1, 0))).asUInt
+    val addrS = radixCount
+    val addrT = (~radixCount + 1.U)(addrWidth - 1, 0)
     
     val sameAddr = addrS === addrT
 
@@ -137,13 +137,17 @@ class FFTDataProcess extends Module with DataConfig{
         sum
     }
 
-    val addrSBankSelPre = (0 until parallelCnt by 1).map(j => getBitSeqSum(addrS, parallelCnt, parallelCnt - 1 - j))
+    val addrSBankSelPre = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    for(i <- 0 until parallelCnt) {
+        addrSBankSelPre(i) := addrS(i) ^ addrS(addrWidth - 1 - i)
+    }
+    val addrSBankSel = addrSBankSelPre.reduce((x, y) => Cat(x, y))
 
-    val addrSBankSel = addrSBankSelPre.fold(0.U)((x, y) => (x << 1) + y)(parallelCnt - 1, 0)
-
-    val addrTBankSelPre = (0 until parallelCnt by 1).map(j => getBitSeqSum(addrT, parallelCnt, parallelCnt - 1 - j))
-
-    val addrTBankSel = addrTBankSelPre.fold(0.U)((x, y) => (x << 1) + y)(parallelCnt - 1, 0)
+    val addrTBankSelPre = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    for(i <- 0 until parallelCnt) {
+        addrTBankSelPre(i) := addrT(i) ^ addrT(addrWidth - 1 - i)
+    }
+    val addrTBankSel = addrTBankSelPre.reduce((x, y) => Cat(x, y))
 
     when(srcBuffer === 0.U) {
         io.addrSram0Bank(addrSBankSel) := addrS(addrWidth - parallelCnt - 1, 0)
@@ -205,7 +209,7 @@ class FFTDataProcess extends Module with DataConfig{
     dataCalc.io.nk := radixCount(addrWidth - 1, 0)
     dataCalc.io.rShiftSym := phaseCount(0)
     dataCalc.io.isFFT := isFFT
-    dataCalc.io.dataMode := ~phaseCount(0)
+    dataCalc.io.procMode := ~phaseCount(0)
     dataCalc.io.state1c := procState1c
     dataCalc.io.state2c := procState2c
     val writeDataSRPre = dataCalc.io.dataOutSR3c

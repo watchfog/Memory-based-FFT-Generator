@@ -20,7 +20,7 @@ class FFT3PipelineCalc extends Module with DataConfig{
 
         val rShiftSym = Input(Bool())
         val isFFT = Input(Bool())
-        val dataMode = Input(Bool())
+        val procMode = Input(Bool())
         val state1c = Input(Bool())
         val state2c = Input(Bool())
     })
@@ -37,7 +37,7 @@ class FFT3PipelineCalc extends Module with DataConfig{
 
     val nk1c = ShiftRegister(io.nk, 1, 0.U, true.B)
 
-    val twiLutIdx1c = Cat(nk1c(addrWidth - 1 - 1, 0), 0.U(1.W))
+    val twiLutIdx1c = nk1c
 
     val twiLutCaseIdx1c = Mux(io.isFFT, 0.U(2.W), 1.U(2.W))
 
@@ -74,8 +74,8 @@ class FFT3PipelineCalc extends Module with DataConfig{
     val qR2cProc = Cat(tR2c(fftDataWidth + 1), tR2c)
     val qI2cProc = ~Cat(tI2c(fftDataWidth + 1), tI2c) + 1.U
 
-    val qR2c = Mux(io.dataMode, qR2cProc, qR2cKernel)
-    val qI2c = Mux(io.dataMode, qI2cProc, qI2cKernel)
+    val qR2c = Mux(io.procMode, qR2cProc, qR2cKernel)
+    val qI2c = Mux(io.procMode, qI2cProc, qI2cKernel)
 
     val sR3c = ShiftRegister(sR2c, 1, 0.U, io.state2c)
     val sI3c = ShiftRegister(sI2c, 1, 0.U, io.state2c)

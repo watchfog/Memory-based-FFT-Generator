@@ -27,7 +27,6 @@ class FFTEngine extends Module with DataConfig{
         val fftMode = Input(Bool())
 
         val fftRShiftP0 = Input(Vec(stageCnt + 1, Bool()))
-        val fftRShiftP1 = Input(Vec(2, Bool()))
     })
 
     val FFTCycleVal = (fftLength / pow(2, parallelCnt).toInt - 1).U
@@ -161,7 +160,6 @@ class FFTEngine extends Module with DataConfig{
                 }
                 
             }
-            //TODO error
         } .otherwise {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
                 nk(i) := Cat(radixCount(radixCount.getWidth - 1 - 1, 0), i.U((parallelCnt - 1).W)) & ~(Cat(0.U(1.W), VecInit(Seq.fill(stageCnt)(1.U(1.W))).asUInt) >> phaseCount)
@@ -304,10 +302,10 @@ class FFTEngine extends Module with DataConfig{
         fftCalc.io.dataInSI := dataInIPre(addrSBankSel1c(i))
         fftCalc.io.dataInTR := dataInRPre(addrTBankSel1c(i))
         fftCalc.io.dataInTI := dataInIPre(addrTBankSel1c(i))
-        fftCalc.io.nk := nk(i)
+        fftCalc.io.nk := Cat(nk(i)(addrWidth - 1 - 1, 0), 0.U(1.W))
         fftCalc.io.rShiftSym := io.fftRShiftP0(phaseCount)
         fftCalc.io.isFFT := isFFT
-        fftCalc.io.dataMode := false.B
+        fftCalc.io.procMode := false.B
         fftCalc.io.state1c := kernelState1c
         fftCalc.io.state2c := kernelState2c
         val writeDataSPre = Cat(fftCalc.io.dataOutSI3c, fftCalc.io.dataOutSR3c)

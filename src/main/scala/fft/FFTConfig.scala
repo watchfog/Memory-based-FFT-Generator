@@ -5,7 +5,7 @@ import chisel3.util.log2Ceil
 trait DataConfig{
     val fftLength = 128
     val fftDataWidth = 14
-    val parallelCnt = 3
+    val parallelCnt = 2
     val addrWidth = log2Ceil(fftLength)
     val stageCnt = addrWidth - 1
 }
