@@ -249,21 +249,19 @@ class FFTEngine extends Module with DataConfig{
     val addrSProc = radixCount
     val addrTProc = (~radixCount + 1.U)(addrWidth - 1, 0)
 
-    val addrS = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt((addrWidth - 1).W)))
-    val addrT = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt((addrWidth - 1).W)))
-    addrS(0) := Mux(procState, addrSProc, myBitReverse(addrWidth, true.B, addrSKernelPre(0)))
-    addrT(0) := Mux(procState, addrTProc, myBitReverse(addrWidth, true.B, addrTKernelPre(0)))
+    val addrS = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt(addrWidth.W)))
+    val addrT = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt(addrWidth.W)))
     for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
         if(i == 0) {
-            addrS(i) := Mux(procState, addrSProc, myBitReverse(addrWidth, true.B, addrSKernelPre(i)))
-            addrT(i) := Mux(procState, addrTProc, myBitReverse(addrWidth, true.B, addrTKernelPre(i)))
+            addrS(i) := Mux(procState, myBitReverse(addrWidth, true.B, addrSProc), myBitReverse(addrWidth, true.B, addrSKernelPre(i)))
+            addrT(i) := Mux(procState, myBitReverse(addrWidth, true.B, addrTProc), myBitReverse(addrWidth, true.B, addrTKernelPre(i)))
         } else {
             addrS(i) := myBitReverse(addrWidth, true.B, addrSKernelPre(i))
-            addrT(i) := myBitReverse(addrWidth, true.B, addrSKernelPre(i))
+            addrT(i) := myBitReverse(addrWidth, true.B, addrTKernelPre(i))
         }
     }
 
-    val sameAddr = addrSProc === addrTProc
+    val sameAddr = addrS(0) === addrT(0)
 
     def getBitSeqSum(dataIn: UInt, gap: Int, start: Int): UInt = {
         val sum = (start until dataIn.getWidth by gap).map(_.asUInt).fold(0.U(parallelCnt.W))((x, y) => x + dataIn(y))
@@ -284,30 +282,26 @@ class FFTEngine extends Module with DataConfig{
     
     for (i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
         when(kernelState) {
-            if(i == 0) {
-                addrSBankSelKernel(i) := 0.U
-                addrTBankSelKernel(i) := 1.U
-            } else {
-                addrSBankSelKernel(i) := addrSBankSelKernelPre(i)
-                addrTBankSelKernel(i) := addrTBankSelKernelPre(i)
-            }
+            addrSBankSelKernel(i) := addrSBankSelKernelPre(i)
+            addrTBankSelKernel(i) := addrTBankSelKernelPre(i)
         } .otherwise {
             addrSBankSelKernel(i) := (i.U << 1)(parallelCnt - 1, 0)
-            addrSBankSelKernel(i) := (1.U + (i.U << 1))(parallelCnt - 1, 0)
+            addrTBankSelKernel(i) := (1.U + (i.U << 1))(parallelCnt - 1, 0)
         }
     }
-
-    val addrSBankSelProcPre = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
-    for(i <- 0 until parallelCnt) {
-        addrSBankSelProcPre(i) := addrS(i) ^ addrS(addrWidth - 1 - i)
+    
+    val addrSBankSelProc = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrTBankSelProc = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+        val addrSBankSelProcPre = Wire(Vec(parallelCnt, UInt(1.W)))
+        val addrTBankSelProcPre = Wire(Vec(parallelCnt, UInt(1.W)))
+        for(j <- 0 until parallelCnt) {
+            addrSBankSelProcPre(j) := addrS(i)(j) ^ addrS(i)(addrWidth - 1 - j)
+            addrTBankSelProcPre(j) := addrT(i)(j) ^ addrT(i)(addrWidth - 1 - j)
+        }
+        addrSBankSelProc(i) := addrSBankSelProcPre.reduce((x, y) => Cat(x, y))
+        addrTBankSelProc(i) := addrTBankSelProcPre.reduce((x, y) => Cat(x, y))
     }
-    val addrSBankSelProc = addrSBankSelProcPre.reduce((x, y) => Cat(x, y))
-
-    val addrTBankSelProcPre = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
-    for(i <- 0 until parallelCnt) {
-        addrTBankSelProcPre(i) := addrT(i) ^ addrT(addrWidth - 1 - i)
-    }
-    val addrTBankSelProc = addrTBankSelProcPre.reduce((x, y) => Cat(x, y))
 
     val addrSBankSelKernel1c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
     val addrSBankSelKernel2c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
@@ -325,12 +319,21 @@ class FFTEngine extends Module with DataConfig{
         addrTBankSelKernel3c(i) := ShiftRegister(addrTBankSelKernel2c(i), 1, (i * 2 + 1).U, true.B)
     }
 
-    val addrSBankSelProc1c = ShiftRegister(addrSBankSelProc, 1, 0.U, true.B)
-    val addrSBankSelProc2c = ShiftRegister(addrSBankSelProc1c, 1, 0.U, true.B)
-    val addrSBankSelProc3c = ShiftRegister(addrSBankSelProc2c, 1, 0.U, true.B)
-    val addrTBankSelProc1c = ShiftRegister(addrTBankSelProc, 1, 1.U, true.B)
-    val addrTBankSelProc2c = ShiftRegister(addrTBankSelProc1c, 1, 1.U, true.B)
-    val addrTBankSelProc3c = ShiftRegister(addrTBankSelProc2c, 1, 1.U, true.B)
+    val addrSBankSelProc1c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrSBankSelProc2c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrSBankSelProc3c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrTBankSelProc1c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrTBankSelProc2c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+    val addrTBankSelProc3c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
+
+    for (i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+        addrSBankSelProc1c(i) := ShiftRegister(addrSBankSelProc(i), 1, (i * 2).U, true.B)
+        addrSBankSelProc2c(i) := ShiftRegister(addrSBankSelProc1c(i), 1, (i * 2).U, true.B)
+        addrSBankSelProc3c(i) := ShiftRegister(addrSBankSelProc2c(i), 1, (i * 2).U, true.B)
+        addrTBankSelProc1c(i) := ShiftRegister(addrTBankSelProc(i), 1, (i * 2 + 1).U, true.B)
+        addrTBankSelProc2c(i) := ShiftRegister(addrTBankSelProc1c(i), 1, (i * 2 + 1).U, true.B)
+        addrTBankSelProc3c(i) := ShiftRegister(addrTBankSelProc2c(i), 1, (i * 2 + 1).U, true.B)
+    }
 
     val kernelState1c = ShiftRegister(kernelState, 1, false.B, true.B)
     val kernelState2c = ShiftRegister(kernelState1c, 1, false.B, true.B)
@@ -370,8 +373,8 @@ class FFTEngine extends Module with DataConfig{
         val addrTBankSel = Wire(UInt())
 
         if(i == 0) {
-            addrSBankSel := Mux(kernelState, addrSBankSelKernel(i), addrSBankSelProc)
-            addrTBankSel := Mux(kernelState, addrTBankSelKernel(i), addrTBankSelProc)
+            addrSBankSel := Mux(kernelState, addrSBankSelKernel(i), addrSBankSelProc(i))
+            addrTBankSel := Mux(kernelState, addrTBankSelKernel(i), addrTBankSelProc(i))
         } else {
             addrSBankSel := addrSBankSelKernel(i)
             addrTBankSel := addrTBankSelKernel(i)
@@ -386,46 +389,41 @@ class FFTEngine extends Module with DataConfig{
         fftCalc.io.dataInTR := Mux(sameAddr1c && phaseCount === 1.U, dataInIPre(addrTBankSel1c), dataInRPre(addrTBankSel1c))
         fftCalc.io.dataInTI := Mux(sameAddr1c && phaseCount === 1.U, 0.U, dataInIPre(addrTBankSel1c))
         fftCalc.io.nk := Mux(procState, radixCount(addrWidth - 1, 0), Cat(nk(i)(addrWidth - 1 - 1, 0), 0.U(1.W)))
-        fftCalc.io.rShiftSym := Mux(kernelState, io.fftRShiftP0(phaseCount), phaseCount(0))
+        fftCalc.io.rShiftSym := Mux(kernelState1c, io.fftRShiftP0(phaseCount), phaseCount(0))
         fftCalc.io.isFFT := isFFT
-        fftCalc.io.procMode := (~phaseCount(0) && procState)
+        fftCalc.io.procMode := (~phaseCount(0) && procState2c)
         fftCalc.io.state1c := kernelState1c | procState1c
         fftCalc.io.state2c := kernelState2c | procState2c
         val writeDataSRPre = fftCalc.io.dataOutSR3c
         val writeDataSIPre = fftCalc.io.dataOutSI3c
-        val writeDataTRPre = Mux(procState && phaseCount === 1.U, fftCalc.io.dataOutTR3c, fftCalc.io.dataOutTI3c)
-        val writeDataTIPre = Mux(procState && phaseCount === 1.U, ~fftCalc.io.dataOutTI3c + 1.U, ~fftCalc.io.dataOutTR3c + 1.U)
+        val writeDataTRPre = Mux(procState3c, Mux(phaseCount === 1.U, fftCalc.io.dataOutTR3c, fftCalc.io.dataOutTI3c), fftCalc.io.dataOutTR3c)
+        val writeDataTIPre = Mux(procState3c, Mux(phaseCount === 1.U, ~fftCalc.io.dataOutTI3c + 1.U, ~fftCalc.io.dataOutTR3c + 1.U), fftCalc.io.dataOutTI3c)
     
         val addrSBankSel3c = Wire(UInt())
         val addrTBankSel3c = Wire(UInt())
 
-        if(i == 0) {
-            when(isFFT) {
-                addrSBankSel3c := Mux(procState3c | (kernelState3c && phaseCount === FFTPhaseVal), addrSBankSelKernel3c(i), addrSBankSelProc3c)
-                addrTBankSel3c := Mux(procState3c | (kernelState3c && phaseCount === FFTPhaseVal), addrTBankSelKernel3c(i), addrTBankSelProc3c)
-            } .otherwise {
-                addrSBankSel3c := Mux(procState3c && phaseCount === 0.U, addrSBankSelKernel3c(i), addrSBankSelProc3c)
-                addrTBankSel3c := Mux(procState3c && phaseCount === 0.U, addrTBankSelKernel3c(i), addrTBankSelProc3c)
-            }
-        } else {
-            addrSBankSel3c := addrSBankSelKernel3c(i)
-            addrTBankSel3c := addrTBankSelKernel3c(i)
+        when(isFFT) {
+            addrSBankSel3c := Mux(procState3c | (kernelState3c && phaseCount === FFTPhaseVal), addrSBankSelProc3c(i), addrSBankSelKernel3c(i))
+            addrTBankSel3c := Mux(procState3c | (kernelState3c && phaseCount === FFTPhaseVal), addrTBankSelProc3c(i), addrTBankSelKernel3c(i))
+        } .otherwise {
+            addrSBankSel3c := Mux(procState3c && phaseCount === 0.U, addrSBankSelProc3c(i), addrSBankSelKernel3c(i))
+            addrTBankSel3c := Mux(procState3c && phaseCount === 0.U, addrTBankSelProc3c(i), addrTBankSelKernel3c(i))
         }
 
-        for(j <- 0 until pow(2, parallelCnt).toInt by 1) {
-            when(procState3c){
-                when(i.U === 0.U) {
-                    when((j.U === addrSBankSel3c) || (j.U === addrTBankSel3c)) {
+        if(i == 0) {
+            for(j <- 0 until pow(2, parallelCnt).toInt by 1) {
+                when(procState3c){
+                    when((j.U === addrSBankSelProc3c(0)) || (j.U === addrTBankSelProc3c(0))) {
                         io.writeEnableSram0Bank(j) := srcBuffer & procState3c
                         io.writeEnableSram1Bank(j) := !srcBuffer & procState3c
                     } .otherwise {
                         io.writeEnableSram0Bank(j) := false.B
                         io.writeEnableSram1Bank(j) := false.B
                     }
+                } .otherwise {
+                    io.writeEnableSram0Bank(j) := srcBuffer & kernelState3c
+                    io.writeEnableSram1Bank(j) := !srcBuffer & kernelState3c
                 }
-            } .otherwise {
-                io.writeEnableSram0Bank(j) := srcBuffer & kernelState3c
-                io.writeEnableSram1Bank(j) := !srcBuffer & kernelState3c
             }
         }
 

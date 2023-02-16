@@ -9,7 +9,7 @@ import chiseltest.simulator.WriteVcdAnnotation
 
 class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConfig {
     val OutputDataFlow = true
-    "FFTEngine should calculate CFFT" in {
+    "FFTEngine should calculate RFFT" in {
         test(new FFTEngine).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
             //initialize
             for(i <- 0 to stageCnt by 1) {
@@ -34,18 +34,19 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
             //initialize sram
             var sram0bank = Array.ofDim[UInt](pow(2, parallelCnt).toInt, fftLength / pow(2, parallelCnt).toInt)
             var sram1bank = Array.ofDim[UInt](pow(2, parallelCnt).toInt, fftLength / pow(2, parallelCnt).toInt)
+            // var fftRefIn = new Array[Complex](fftLength * 2)
+            // var fftRefOut = new Array[Complex](fftLength * 2)
             var fftRefIn = new Array[Complex](fftLength)
             var fftRefOut = new Array[Complex](fftLength)
 
             def signalGenerator(n: Int): UInt = {
                 val t: Double = n * 2.0 * Pi / fftLength.toDouble
-                var temp1 = (1 * sin((t*2)*4) + 1 * cos((t*2)*4) + 2) * pow(2, 6)
-                var temp2 = (1 * sin((t*2+1)*4) + 1 * cos((t*2+1)*4) + 2) * pow(2, 6)
+                var temp1 = (0 * sin((t*2)*1) + 0 * cos((t*2)*2) + 2) * pow(2, 6)
+                var temp2 = (0 * sin((t*2+1)*1) + 0 * cos((t*2+1)*2) + 2) * pow(2, 6)
                 var tempU = (round(temp2.abs) * pow(2, 16) + round(temp1.abs)).toLong.asUInt
+                // fftRefIn(2 * n) = new Complex(temp1, 0)
+                // fftRefIn(2 * n + 1) = new Complex(temp2, 0)
                 fftRefIn(n) = new Complex(temp1, temp2)
-                // var temp = (1 * sin(t) + 0 * cos(t*4) + 2) * pow(2, 6)
-                // var tempU = (round(temp.abs)).toLong.asUInt
-                // fftRefIn(n) = new Complex(temp, 0)
                 tempU
             }
 
@@ -56,15 +57,11 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
             for(radix <- 0 until fftLength) {
                 var radixUInt = radix.U
                 var radixReverse = (0 until addrWidth).fold(0)((x, y) => x * 2 + radixUInt(y).litValue.toInt)
-                // println(radix)
                 for(i <- 0 until (addrWidth.toFloat / parallelCnt.toFloat).ceil.toInt){
                     radixSum += (radix & ((pow(2, parallelCnt).toInt - 1) << (i * parallelCnt))) >> (i * parallelCnt)
-                    // radixSum += (radixReverse & ((pow(2, parallelCnt).toInt - 1) << (i * parallelCnt))) >> (i * parallelCnt)
-                    // println(s"$i")
                 }
                 bankSel = radixSum & (pow(2, parallelCnt).toInt - 1)
                 bankAddr = radix & (pow(2, addrWidth - parallelCnt).toInt - 1)
-                // println(s"radix:$radix $bankSel $bankAddr")
                 sram0bank(bankSel)(bankAddr) = signalGenerator(radix)
                 sram1bank(bankSel)(bankAddr) = 0.U(32.W)
                 radixSum = 0
@@ -127,10 +124,8 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 new Complex(dataR, dataI)
             }
             
-            //test addr
             for(phase <- 0 until log2Ceil(fftLength)) {
-            // for(phase <- 0 until 1) {
-                println("Phase" + phase)
+                println("KernelPhase" + phase)
                 println("----------------------------")
                 //first step, no valid input
                 if(phase % 2 == 0) { //srcBuffer = 0
@@ -232,20 +227,123 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 dut.clock.step(2)
             }
 
+            for(phase <- 0 until 0) {
+                println("ProcPhase" + phase)
+                println("----------------------------")
+                //first step, no valid input
+                if((phase + log2Ceil(fftLength)) % 2 == 0) { //srcBuffer = 0
+                    for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
+                        if(OutputDataFlow) println("Wait for addr")
+                        addrTemp(i) = dut.io.addrSram0Bank(i).peek()
+                        rd0En(i) = dut.io.readEnableSram0Bank(i).peek().litValue.toInt == 1
+                    }
+                } else {
+                    for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
+                        if(OutputDataFlow) println("Wait for addr")
+                        addrTemp(i) = dut.io.addrSram1Bank(i).peek()
+                        rd1En(i) = dut.io.readEnableSram1Bank(i).peek().litValue.toInt == 1
+                    }
+                }
+                if(OutputDataFlow) println("----------------------------")
+                dut.clock.step()
+
+                //no output
+                for(radix <- 0 until 2) {
+                    if((phase + log2Ceil(fftLength)) % 2 == 0) { //srcBuffer = 0
+                        for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
+                            if(rd0En(i)) dut.io.readDataSram0Bank(i).poke(sram0bank(i)(addrTemp(i).litValue.toInt))
+                            if(OutputDataFlow && rd0En(i)) println("Sram0 bank" + i + " addr is " + addrTemp(i))
+                            if(OutputDataFlow && rd0En(i)) println("Sram0 bank" + i + " data is " + complexUInt2Complex(sram0bank(i)(addrTemp(i).litValue.toInt)))
+                            if(OutputDataFlow && rd0En(i)) println("Wait for data out")
+                            addrTemp(i) = dut.io.addrSram0Bank(i).peek()
+                            rd0En(i) = dut.io.readEnableSram0Bank(i).peek().litValue.toInt == 1
+                        }
+                    } else {
+                        for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
+                            if(rd1En(i)) dut.io.readDataSram1Bank(i).poke(sram1bank(i)(addrTemp(i).litValue.toInt))
+                            if(OutputDataFlow && rd1En(i)) println("Sram1 bank" + i + " addr is " + addrTemp(i))
+                            if(OutputDataFlow && rd1En(i)) println("Sram1 bank" + i + " data is " + complexUInt2Complex(sram1bank(i)(addrTemp(i).litValue.toInt)))
+                            if(OutputDataFlow && rd1En(i)) println("Wait for data out")
+                            addrTemp(i) = dut.io.addrSram1Bank(i).peek()
+                            rd1En(i) = dut.io.readEnableSram1Bank(i).peek().litValue.toInt == 1
+                        }
+                    }
+                    if(OutputDataFlow) println("----------------------------")
+                    dut.clock.step()
+                }
+                //start output
+                for(radix <- 3 to fftLength / 2) {
+                    if((phase + log2Ceil(fftLength)) % 2 == 0) { //srcbuffer = 0
+                        for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
+                            wr1En(i) = dut.io.writeEnableSram1Bank(i).peek().litValue.toInt == 1
+                            if(rd0En(i)) dut.io.readDataSram0Bank(i).poke(sram0bank(i)(addrTemp(i).litValue.toInt)) //read data from sram0
+                            if(OutputDataFlow && rd0En(i)) println("Sram0 bank" + i + " addr is " + addrTemp(i))
+                            if(OutputDataFlow && rd0En(i)) println("Sram0 bank" + i + " data is " + complexUInt2Complex(sram0bank(i)(addrTemp(i).litValue.toInt)))
+                            addrTemp(i) = dut.io.addrSram0Bank(i).peek()
+                            rd0En(i) = dut.io.readEnableSram0Bank(i).peek().litValue.toInt == 1
+                        }
+                        for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
+                            if(wr1En(i)) sram1bank(i)(dut.io.addrSram1Bank(i).peek().litValue.toInt) = dut.io.writeDataSram1Bank(i).peek() //write to sram1
+                            if(OutputDataFlow && wr1En(i)) println("Sram1 bank" + i + " addr is " + dut.io.addrSram1Bank(i).peek())
+                            if(OutputDataFlow && wr1En(i)) println("Sram1 bank" + i + " data is " + complexUInt2Complex(dut.io.writeDataSram1Bank(i).peek()))
+                        }
+                    } else {
+                        for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
+                            wr0En(i) = dut.io.writeEnableSram0Bank(i).peek().litValue.toInt == 1
+                            if(rd1En(i)) dut.io.readDataSram1Bank(i).poke(sram1bank(i)(addrTemp(i).litValue.toInt)) //read data from sram1
+                            if(OutputDataFlow && rd1En(i)) println("Sram1 bank" + i + " addr is " + addrTemp(i))
+                            if(OutputDataFlow && rd1En(i)) println("Sram1 bank" + i + " data is " + complexUInt2Complex(sram1bank(i)(addrTemp(i).litValue.toInt)))
+                            addrTemp(i) = dut.io.addrSram1Bank(i).peek()
+                            rd1En(i) = dut.io.readEnableSram1Bank(i).peek().litValue.toInt == 1
+                        }
+                        for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
+                            if(wr0En(i)) sram0bank(i)(dut.io.addrSram0Bank(i).peek().litValue.toInt) = dut.io.writeDataSram0Bank(i).peek() //write to sram0
+                            if(OutputDataFlow && wr0En(i)) println("Sram0 bank" + i + " addr is " + dut.io.addrSram0Bank(i).peek())
+                            if(OutputDataFlow && wr0En(i)) println("Sram0 bank" + i + " data is " + complexUInt2Complex(dut.io.writeDataSram0Bank(i).peek()))
+                        }
+                    }
+                    if(OutputDataFlow) println("----------------------------")
+                    dut.clock.step()
+                }
+                //stop input
+                for(radix <- 0 until 2) {
+                    if((phase + log2Ceil(fftLength)) % 2 == 0) { //srcBuffer = 0
+                        for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
+                            wr1En(i) = dut.io.writeEnableSram1Bank(i).peek().litValue.toInt == 1
+                            if(OutputDataFlow && wr1En(i)) println("No input now")
+                            if(wr1En(i)) sram1bank(i)(dut.io.addrSram1Bank(i).peek().litValue.toInt) = dut.io.writeDataSram1Bank(i).peek()
+                            if(OutputDataFlow && wr1En(i)) println("Sram1 bank" + i + " addr is " + dut.io.addrSram1Bank(i).peek())
+                            if(OutputDataFlow && wr1En(i)) println("Sram1 bank" + i + " data is " + complexUInt2Complex(dut.io.writeDataSram1Bank(i).peek()))
+                        }
+                    } else {
+                        for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
+                            wr0En(i) = dut.io.writeEnableSram0Bank(i).peek().litValue.toInt == 1
+                            if(OutputDataFlow && wr0En(i)) println("No input now")
+                            if(wr0En(i)) sram0bank(i)(dut.io.addrSram0Bank(i).peek().litValue.toInt) = dut.io.writeDataSram0Bank(i).peek()
+                            if(OutputDataFlow && wr0En(i)) println("Sram0 bank" + i + " addr is " + dut.io.addrSram0Bank(i).peek())
+                            if(OutputDataFlow && wr0En(i)) println("Sram0 bank" + i + " data is " + complexUInt2Complex(dut.io.writeDataSram0Bank(i).peek()))
+                        }
+                    }
+                    if(OutputDataFlow) println("----------------------------")
+                    dut.clock.step()
+                }
+                dut.clock.step(2)
+            }
+
             var fftDiffAbsSum = 0.0
             var fftCmSum = 0.0
             //output data
             for(radix <- 0 until fftLength) {
                 var radixUInt = radix.U
                 var radixReverse = (0 until addrWidth).fold(0)((x, y) => x * 2 + radixUInt(y).litValue.toInt)
+                var radixUIntReverse = radixReverse.U
 
-                for(i <- 0 until (addrWidth.toFloat / parallelCnt.toFloat).ceil.toInt){
-                    radixSum += (radixReverse & ((pow(2, parallelCnt).toInt - 1) << (i * parallelCnt))) >> (i * parallelCnt)
-                }
+                radixSum = (0 until parallelCnt).fold(0)((x, y) => x * 2 + (radixUIntReverse(y).litValue.toInt + radixUIntReverse(addrWidth - 1 -y).litValue.toInt) % 2)
+
                 bankSel = radixSum & (pow(2, parallelCnt).toInt - 1)
                 bankAddr = radixReverse & (pow(2, addrWidth - parallelCnt).toInt - 1)
                 radixSum = 0
-
+                // println(s"$bankSel $bankAddr")
                 var sramData = 0.U
                 if(stageCnt % 2 == 1) {
                     sramData = sram0bank(bankSel)(bankAddr)
@@ -253,15 +351,13 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                     sramData = sram1bank(bankSel)(bankAddr)
                 }
 
-                if(radix <= fftLength / 2) {
-                    var fftOut = complexUInt2Complex(sramData)
-                    var fftDiffAbsR = (fftOut.re - fftRefOut(radix).re).abs
-                    var fftDiffAbsI = (fftOut.im - fftRefOut(radix).im).abs
-                    var fftCmR = fftOut.re + fftRefOut(radix).re
-                    var fftCmI = fftOut.im + fftRefOut(radix).im
-                    fftDiffAbsSum = fftDiffAbsSum + fftDiffAbsR + fftDiffAbsI
-                    fftCmSum = fftCmSum + fftCmR + fftCmI
-                }
+                var fftOut = complexUInt2Complex(sramData)
+                var fftDiffAbsR = (fftOut.re - fftRefOut(radix).re).abs
+                var fftDiffAbsI = (fftOut.im - fftRefOut(radix).im).abs
+                var fftCmR = fftOut.re + fftRefOut(radix).re
+                var fftCmI = fftOut.im + fftRefOut(radix).im
+                fftDiffAbsSum = fftDiffAbsSum + fftDiffAbsR + fftDiffAbsI
+                fftCmSum = fftCmSum + fftCmR + fftCmI
 
                 println(s"$radix: " + complexUInt2Complex(sramData))
                 println(s"Ref: "  + fftRefOut(radix))
