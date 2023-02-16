@@ -156,7 +156,7 @@ class FFTEngine extends Module with DataConfig{
 
     val readEnable = kernelState | procState
 
-    val radixCountTemp = radixCount(radixCount.getWidth - 1 - 1, 0)
+    val radixCountTemp = radixCount(radixCount.getWidth - parallelCnt - 1, 0)
 
     def myBitReverse(widthIn: Int, sel: Bool, in: UInt): UInt = {
         val temp = (0 until widthIn by 1)
@@ -167,28 +167,28 @@ class FFTEngine extends Module with DataConfig{
     val nk = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
 
     if (parallelCnt == 1) {
-        nk := (0 until pow(2, parallelCnt - 1).toInt).map(i => radixCount(radixCount.getWidth - 1 - 1, 0) & ~(Cat(0.U(1.W), VecInit(Seq.fill(stageCnt)(1.U(1.W))).asUInt) >> phaseCount))
+        nk := (0 until pow(2, parallelCnt - 1).toInt).map(i => radixCount(radixCount.getWidth - parallelCnt - 1, 0) & ~(Cat(0.U(1.W), VecInit(Seq.fill(stageCnt)(1.U(1.W))).asUInt) >> phaseCount))
     } else if(parallelCnt == 2) {
         when(phaseCount === FFTPhaseVal) {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-                nk(i) := Cat(i.U, radixCount(radixCount.getWidth - 1 - 1, 0))
+                nk(i) := Cat(i.U, radixCount(radixCount.getWidth - parallelCnt - 1, 0))
             }
         } .otherwise {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-                nk(i) := Cat(radixCount(radixCount.getWidth - 1 - 1, 0), i.U((parallelCnt - 1).W)) & ~(Cat(0.U(1.W), VecInit(Seq.fill(stageCnt)(1.U(1.W))).asUInt) >> phaseCount)
+                nk(i) := Cat(radixCount(radixCount.getWidth - parallelCnt - 1, 0), i.U((parallelCnt - 1).W)) & ~(Cat(0.U(1.W), VecInit(Seq.fill(stageCnt)(1.U(1.W))).asUInt) >> phaseCount)
             }
         }
     } else if(parallelCnt == 3) {
         when(phaseCount === FFTPhaseVal) {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-                nk(i) := Cat(i.U, radixCount(radixCount.getWidth - 1 - 1, 0))
+                nk(i) := Cat(i.U, radixCount(radixCount.getWidth - parallelCnt - 1, 0))
             }
         } .elsewhen(phaseCount === FFTPhaseValM1) {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
                 if(stageCnt == 16) {
                     nk(i) := Cat(i.U, 0.U(1.W))
                 } else {
-                    nk(i) := Cat(i.U, radixCount(radixCount.getWidth - 1 - 1, 1), 0.U(1.W))
+                    nk(i) := Cat(i.U, radixCount(radixCount.getWidth - parallelCnt - 1, 1), 0.U(1.W))
                 }
                 
             }
@@ -285,8 +285,8 @@ class FFTEngine extends Module with DataConfig{
             addrSBankSelKernel(i) := addrSBankSelKernelPre(i)
             addrTBankSelKernel(i) := addrTBankSelKernelPre(i)
         } .otherwise {
-            addrSBankSelKernel(i) := (i.U << 1)(parallelCnt - 1, 0)
-            addrTBankSelKernel(i) := (1.U + (i.U << 1))(parallelCnt - 1, 0)
+            addrSBankSelKernel(i) := (i * 2).U(parallelCnt.W)
+            addrTBankSelKernel(i) := (i * 2 + 1).U(parallelCnt.W)
         }
     }
     
@@ -427,17 +427,46 @@ class FFTEngine extends Module with DataConfig{
             }
         }
 
-        when(srcBuffer === 0.U) {
-            io.addrSram0Bank(addrSBankSel) := addrS(i)(addrWidth - parallelCnt - 1, 0)
-            io.addrSram0Bank(addrTBankSel) := addrT(i)(addrWidth - parallelCnt - 1, 0)
-            io.addrSram1Bank(addrSBankSel3c) := addrS3c
-            io.addrSram1Bank(addrTBankSel3c) := addrT3c
+        when(!procState) {
+            when(srcBuffer === 0.U) {
+                io.addrSram0Bank(addrTBankSel) := addrT(i)(addrWidth - parallelCnt - 1, 0)
+                io.addrSram0Bank(addrSBankSel) := addrS(i)(addrWidth - parallelCnt - 1, 0)
+            } .otherwise {
+                io.addrSram1Bank(addrTBankSel) := addrT(i)(addrWidth - parallelCnt - 1, 0)
+                io.addrSram1Bank(addrSBankSel) := addrS(i)(addrWidth - parallelCnt - 1, 0)
+            }
         } .otherwise {
-            io.addrSram0Bank(addrSBankSel3c) := addrS3c
-            io.addrSram0Bank(addrTBankSel3c) := addrT3c
-            io.addrSram1Bank(addrSBankSel) := addrS(i)(addrWidth - parallelCnt - 1, 0)
-            io.addrSram1Bank(addrTBankSel) := addrT(i)(addrWidth - parallelCnt - 1, 0)
+            if(i == 0) {
+                    when(srcBuffer === 0.U) {
+                        io.addrSram0Bank(addrTBankSel) := addrT(i)(addrWidth - parallelCnt - 1, 0)
+                        io.addrSram0Bank(addrSBankSel) := addrS(i)(addrWidth - parallelCnt - 1, 0)
+                    } .otherwise {
+                        io.addrSram1Bank(addrTBankSel) := addrT(i)(addrWidth - parallelCnt - 1, 0)
+                        io.addrSram1Bank(addrSBankSel) := addrS(i)(addrWidth - parallelCnt - 1, 0)
+                    }
+            }
         }
+
+        when(!procState3c) {
+            when(srcBuffer === 0.U) {
+                io.addrSram1Bank(addrTBankSel3c) := addrT3c
+                io.addrSram1Bank(addrSBankSel3c) := addrS3c
+            } .otherwise {
+                io.addrSram0Bank(addrTBankSel3c) := addrT3c
+                io.addrSram0Bank(addrSBankSel3c) := addrS3c
+            }
+        } .otherwise {
+            if(i == 0) {
+                when(srcBuffer === 0.U) {
+                    io.addrSram1Bank(addrTBankSel3c) := addrT3c
+                    io.addrSram1Bank(addrSBankSel3c) := addrS3c
+                } .otherwise {
+                    io.addrSram0Bank(addrTBankSel3c) := addrT3c
+                    io.addrSram0Bank(addrSBankSel3c) := addrS3c
+                }
+            }
+        }
+
 
         val writeDataS = Wire(UInt())
         val writeDataT = Wire(UInt())
@@ -452,7 +481,7 @@ class FFTEngine extends Module with DataConfig{
 
         for(j <- 0 until pow(2, parallelCnt).toInt by 1) {
             when(procState3c){
-                when(i.U === 0.U) {
+                if(i == 0) {
                     when(j.U === addrSBankSel3c) {
                         io.writeDataSram0Bank(j) := writeDataS
                         io.writeDataSram1Bank(j) := writeDataS
