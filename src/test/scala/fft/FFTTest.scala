@@ -42,7 +42,7 @@ class FFTEngineTest extends AnyFlatSpec with ChiselScalatestTester with DataConf
 
             def signalGenerator(n: Int): UInt = {
                 val t: Double = n * 2.0 * Pi / fftLength.toDouble
-                var temp = (1 * sin(t*4) + 0 * cos(t) + 2) * pow(2, 4)
+                var temp = (1 * sin(t*4) + 1 * cos(t*4) + 2) * pow(2, 4)
                 var tempU = round(temp.abs).U(32.W)
                 fftRefIn(n) = new Complex(temp, 0)
                 tempU
