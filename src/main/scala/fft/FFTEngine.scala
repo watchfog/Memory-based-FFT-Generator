@@ -230,8 +230,8 @@ class FFTEngine extends Module with DataConfig{
     } else if(parallelCnt == 3){
         when(phaseCount === FFTPhaseVal) {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-                addrSKernelPre(i) := Cat(0.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp)
-                addrTKernelPre(i) := Cat(1.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp)
+                addrSKernelPre(i) := cyclicShiftR(Cat(0.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp), 0.U)
+                addrTKernelPre(i) := cyclicShiftR(Cat(1.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp), 0.U) 
             }
         } .elsewhen(phaseCount === FFTPhaseValM1) {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
@@ -380,6 +380,14 @@ class FFTEngine extends Module with DataConfig{
             addrTBankSel := addrTBankSelKernel(i)
         }
 
+        when(isFFT) {
+            addrSBankSel := Mux(procState, addrSBankSelProc(i), addrSBankSelKernel(i))
+            addrTBankSel := Mux(procState, addrTBankSelProc(i), addrTBankSelKernel(i))
+        } .otherwise {
+            addrSBankSel := Mux(procState | (kernelState && phaseCount === 0.U), addrSBankSelProc(i), addrSBankSelKernel(i))
+            addrTBankSel := Mux(procState | (kernelState && phaseCount === 0.U), addrTBankSelProc(i), addrTBankSelKernel(i))
+        }
+
         val addrSBankSel1c = ShiftRegister(addrSBankSel, 1, 0.U, true.B)
         val addrTBankSel1c = ShiftRegister(addrTBankSel, 1, 1.U, true.B)
 
@@ -394,10 +402,10 @@ class FFTEngine extends Module with DataConfig{
         fftCalc.io.procMode := (~phaseCount(0) && procState2c)
         fftCalc.io.state1c := kernelState1c | procState1c
         fftCalc.io.state2c := kernelState2c | procState2c
-        val writeDataSRPre = fftCalc.io.dataOutSR3c
-        val writeDataSIPre = fftCalc.io.dataOutSI3c
-        val writeDataTRPre = Mux(procState3c, Mux(phaseCount === 1.U, fftCalc.io.dataOutTR3c, fftCalc.io.dataOutTI3c), fftCalc.io.dataOutTR3c)
-        val writeDataTIPre = Mux(procState3c, Mux(phaseCount === 1.U, ~fftCalc.io.dataOutTI3c + 1.U, ~fftCalc.io.dataOutTR3c + 1.U), fftCalc.io.dataOutTI3c)
+        val writeDataSRPre3c = fftCalc.io.dataOutSR3c
+        val writeDataSIPre3c = fftCalc.io.dataOutSI3c
+        val writeDataTRPre3c = Mux(procState3c, Mux(phaseCount === 1.U, fftCalc.io.dataOutTR3c, Mux(isFFT, fftCalc.io.dataOutTI3c, ~fftCalc.io.dataOutTI3c + 1.U)), fftCalc.io.dataOutTR3c)
+        val writeDataTIPre3c = Mux(procState3c, Mux(phaseCount === 1.U, ~fftCalc.io.dataOutTI3c + 1.U, Mux(isFFT, ~fftCalc.io.dataOutTR3c + 1.U, fftCalc.io.dataOutTR3c)), fftCalc.io.dataOutTI3c)
     
         val addrSBankSel3c = Wire(UInt())
         val addrTBankSel3c = Wire(UInt())
@@ -406,8 +414,8 @@ class FFTEngine extends Module with DataConfig{
             addrSBankSel3c := Mux(procState3c | (kernelState3c && phaseCount === FFTPhaseVal), addrSBankSelProc3c(i), addrSBankSelKernel3c(i))
             addrTBankSel3c := Mux(procState3c | (kernelState3c && phaseCount === FFTPhaseVal), addrTBankSelProc3c(i), addrTBankSelKernel3c(i))
         } .otherwise {
-            addrSBankSel3c := Mux(procState3c && phaseCount === 0.U, addrSBankSelProc3c(i), addrSBankSelKernel3c(i))
-            addrTBankSel3c := Mux(procState3c && phaseCount === 0.U, addrTBankSelProc3c(i), addrTBankSelKernel3c(i))
+            addrSBankSel3c := Mux(procState3c, addrSBankSelProc3c(i), addrSBankSelKernel3c(i))
+            addrTBankSel3c := Mux(procState3c, addrTBankSelProc3c(i), addrTBankSelKernel3c(i))
         }
 
         if(i == 0) {
@@ -468,35 +476,35 @@ class FFTEngine extends Module with DataConfig{
         }
 
 
-        val writeDataS = Wire(UInt())
-        val writeDataT = Wire(UInt())
+        val writeDataS3c = Wire(UInt())
+        val writeDataT3c = Wire(UInt())
         
         when(sameAddr3c && phaseCount === 0.U) {
-            writeDataS := Cat(writeDataTRPre, writeDataSRPre) //G0 at real and H0 at image
-            writeDataT := Cat(writeDataTRPre, writeDataSRPre)
+            writeDataS3c := Cat(writeDataTRPre3c, writeDataSRPre3c) //G0 at real and H0 at image
+            writeDataT3c := Cat(writeDataTRPre3c, writeDataSRPre3c)
         } .otherwise{
-            writeDataS := Cat(writeDataSIPre, writeDataSRPre)
-            writeDataT := Cat(writeDataTIPre, writeDataTRPre)
+            writeDataS3c := Cat(writeDataSIPre3c, writeDataSRPre3c)
+            writeDataT3c := Cat(writeDataTIPre3c, writeDataTRPre3c)
         }
 
         for(j <- 0 until pow(2, parallelCnt).toInt by 1) {
             when(procState3c){
                 if(i == 0) {
                     when(j.U === addrSBankSel3c) {
-                        io.writeDataSram0Bank(j) := writeDataS
-                        io.writeDataSram1Bank(j) := writeDataS
+                        io.writeDataSram0Bank(j) := writeDataS3c
+                        io.writeDataSram1Bank(j) := writeDataS3c
                     } .elsewhen(j.U === addrTBankSel3c) {
-                        io.writeDataSram0Bank(j) := writeDataT
-                        io.writeDataSram1Bank(j) := writeDataT
+                        io.writeDataSram0Bank(j) := writeDataT3c
+                        io.writeDataSram1Bank(j) := writeDataT3c
                     }
                 }
             } .otherwise {
                 when(j.U === addrSBankSel3c) {
-                    io.writeDataSram0Bank(j) := writeDataS
-                    io.writeDataSram1Bank(j) := writeDataS
+                    io.writeDataSram0Bank(j) := writeDataS3c
+                    io.writeDataSram1Bank(j) := writeDataS3c
                 } .elsewhen(j.U === addrTBankSel3c) {
-                    io.writeDataSram0Bank(j) := writeDataT
-                    io.writeDataSram1Bank(j) := writeDataT
+                    io.writeDataSram0Bank(j) := writeDataT3c
+                    io.writeDataSram1Bank(j) := writeDataT3c
                 }
             }
         }
