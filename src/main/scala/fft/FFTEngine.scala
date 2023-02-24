@@ -479,9 +479,17 @@ class FFTEngine extends Module with DataConfig{
         val writeDataS3c = Wire(UInt())
         val writeDataT3c = Wire(UInt())
         
-        when(sameAddr3c && phaseCount === 0.U) {
-            writeDataS3c := Cat(writeDataTRPre3c, writeDataSRPre3c) //G0 at real and H0 at image
-            writeDataT3c := Cat(writeDataTRPre3c, writeDataSRPre3c)
+        when(sameAddr3c) {
+            when(isFFT && phaseCount === 0.U) {
+                writeDataS3c := Cat(writeDataTRPre3c, writeDataSRPre3c) //G0 at real and H0 at image
+                writeDataT3c := Cat(writeDataTRPre3c, writeDataSRPre3c)
+            } .elsewhen(!isFFT && phaseCount === 1.U) {
+                writeDataS3c := Cat(Cat(writeDataTRPre3c(fftDataWidth + 1), writeDataTRPre3c(fftDataWidth + 1, 1)), Cat(writeDataSRPre3c(fftDataWidth + 1), writeDataSRPre3c(fftDataWidth + 1, 1)))
+                writeDataT3c := Cat(Cat(writeDataTRPre3c(fftDataWidth + 1), writeDataTRPre3c(fftDataWidth + 1, 1)), Cat(writeDataSRPre3c(fftDataWidth + 1), writeDataSRPre3c(fftDataWidth + 1, 1)))
+            } .otherwise {
+                writeDataS3c := Cat(writeDataSIPre3c, writeDataSRPre3c)
+                writeDataT3c := Cat(writeDataTIPre3c, writeDataTRPre3c)
+            }
         } .otherwise{
             writeDataS3c := Cat(writeDataSIPre3c, writeDataSRPre3c)
             writeDataT3c := Cat(writeDataTIPre3c, writeDataTRPre3c)
