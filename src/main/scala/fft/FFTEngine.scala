@@ -253,8 +253,8 @@ class FFTEngine extends Module with DataConfig{
     val addrT = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt(addrWidth.W)))
     for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
         if(i == 0) {
-            addrS(i) := Mux(procState, myBitReverse(addrWidth, true.B, addrSProc), myBitReverse(addrWidth, true.B, addrSKernelPre(i)))
-            addrT(i) := Mux(procState, myBitReverse(addrWidth, true.B, addrTProc), myBitReverse(addrWidth, true.B, addrTKernelPre(i)))
+            addrS(i) := Mux(procState, myBitReverse(addrWidth, isFFT, addrSProc), myBitReverse(addrWidth, true.B, addrSKernelPre(i)))
+            addrT(i) := Mux(procState, myBitReverse(addrWidth, isFFT, addrTProc), myBitReverse(addrWidth, true.B, addrTKernelPre(i)))
         } else {
             addrS(i) := myBitReverse(addrWidth, true.B, addrSKernelPre(i))
             addrT(i) := myBitReverse(addrWidth, true.B, addrTKernelPre(i))

@@ -372,7 +372,7 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
             for(i <- 0 to stageCnt by 1) {
                 dut.io.fftRShiftP0(i).poke(false.B)
             }
-            dut.io.fftMode.poke(1.U) //calculate ifft
+            dut.io.fftMode.poke(true.B) //calculate ifft
             for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
                 dut.io.readDataSram0Bank(i).poke(0.U)
                 dut.io.readDataSram1Bank(i).poke(0.U)
@@ -436,13 +436,14 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 var radixReverse = (0 until addrWidth).fold(0)((x, y) => x * 2 + radixUInt(y).litValue.toInt)
                 var radixUIntReverse = radixReverse.U
 
-                radixSum = (0 until parallelCnt).fold(0)((x, y) => x * 2 + (radixUIntReverse(y).litValue.toInt + radixUIntReverse(addrWidth - 1 -y).litValue.toInt) % 2)
+                radixSum = (0 until parallelCnt).fold(0)((x, y) => x * 2 + (radixUInt(y).litValue.toInt + radixUInt(addrWidth - 1 -y).litValue.toInt) % 2)
 
                 bankSel = radixSum & (pow(2, parallelCnt).toInt - 1)
-                bankAddr = radixReverse & (pow(2, addrWidth - parallelCnt).toInt - 1)
+                bankAddr = radix & (pow(2, addrWidth - parallelCnt).toInt - 1)
 
 
                 sram0bank(bankSel)(bankAddr) = 0.U
+                sram1bank(bankSel)(bankAddr) = 0.U
                 fftRefIn(radix) = new Complex(0, 0)
                 if(radix != 0) fftRefIn(2 * fftLength - radix) = new Complex(0, 0)
                 if(radix == 0) {
@@ -518,7 +519,7 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 println("ProcPhase" + phase)
                 println("----------------------------")
                 //first step, no valid input
-                if((phase + log2Ceil(fftLength)) % 2 == 0) { //srcBuffer = 0
+                if(phase % 2 == 0) { //srcBuffer = 0
                     for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
                         if(OutputDataFlow) println("Wait for addr")
                         addrTemp(i) = dut.io.addrSram0Bank(i).peek()
@@ -536,7 +537,7 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
 
                 //no output
                 for(radix <- 0 until 2) {
-                    if((phase + log2Ceil(fftLength)) % 2 == 0) { //srcBuffer = 0
+                    if(phase % 2 == 0) { //srcBuffer = 0
                         for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
                             if(rd0En(i)) dut.io.readDataSram0Bank(i).poke(sram0bank(i)(addrTemp(i).litValue.toInt))
                             if(OutputDataFlow && rd0En(i)) println("Sram0 bank" + i + " addr is " + addrTemp(i))
@@ -560,7 +561,7 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 }
                 //start output
                 for(radix <- 3 to fftLength / 2) {
-                    if((phase + log2Ceil(fftLength)) % 2 == 0) { //srcbuffer = 0
+                    if(phase % 2 == 0) { //srcbuffer = 0
                         for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
                             wr1En(i) = dut.io.writeEnableSram1Bank(i).peek().litValue.toInt == 1
                             if(rd0En(i)) dut.io.readDataSram0Bank(i).poke(sram0bank(i)(addrTemp(i).litValue.toInt)) //read data from sram0
@@ -594,7 +595,7 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 }
                 //stop input
                 for(radix <- 0 until 2) {
-                    if((phase + log2Ceil(fftLength)) % 2 == 0) { //srcBuffer = 0
+                    if(phase % 2 == 0) { //srcBuffer = 0
                         for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
                             wr1En(i) = dut.io.writeEnableSram1Bank(i).peek().litValue.toInt == 1
                             if(OutputDataFlow && wr1En(i)) println("No input now")
@@ -742,6 +743,7 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 }
 
                 var fftOut = complexUInt2Complex(sramData)
+                fftOut = fftOut * new Complex(2, 0)
                 var fftDiffAbsR1 = (fftOut.re - fftRefOut(radix * 2).re).abs
                 var fftDiffAbsI1 = (0 - fftRefOut(radix * 2).im).abs
                 var fftDiffAbsR2 = (fftOut.im - fftRefOut(radix * 2 + 1).re).abs
@@ -753,9 +755,9 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 fftDiffAbsSum = fftDiffAbsSum + fftDiffAbsR1 + fftDiffAbsI1 + fftDiffAbsR2 + fftDiffAbsI2
                 fftCmSum = fftCmSum + fftCmR1 + fftCmI1 + fftCmR2 + fftCmI2
 
-                println(s"${radix * 2}: " + complexUInt2Complex(sramData).re)
+                println(s"${radix * 2}: " + fftOut.re)
                 println(s"Ref: "  + fftRefOut(radix * 2))
-                println(s"${radix * 2 + 1}: " + complexUInt2Complex(sramData).im)
+                println(s"${radix * 2 + 1}: " + fftOut.im)
                 println(s"Ref: "  + fftRefOut(radix * 2 + 1))
             }
             var smape = fftDiffAbsSum / fftCmSum * 100
