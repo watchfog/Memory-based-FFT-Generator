@@ -40,7 +40,7 @@ class FFTEngine extends Module with DataConfig{
 
     val waitKick :: kernelPP :: kernelPPL :: kernelPPGap :: procPP :: procPPL :: procPPGap :: fftDone :: Nil = Enum(8)
 
-    val isFFT = !io.fftMode
+    val isFFT = io.fftMode
 
     val stateReg = RegInit(waitKick)
 

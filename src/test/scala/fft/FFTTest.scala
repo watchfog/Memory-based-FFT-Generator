@@ -6,16 +6,17 @@ import org.scalatest.freespec.AnyFreeSpec
 import scala.math._
 import chisel3.util.log2Ceil
 import chiseltest.simulator.WriteVcdAnnotation
+import chiseltest.simulator.VerilatorBackendAnnotation
 
 class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConfig {
-    val OutputDataFlow = true
+    val OutputDataFlow = false
     "FFTEngine should calculate RFFT" in {
-        test(new FFTEngine).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
+        test(new FFTEngine).withAnnotations(Seq(WriteVcdAnnotation, VerilatorBackendAnnotation)) { dut =>
             //initialize
             for(i <- 0 to stageCnt by 1) {
                 dut.io.fftRShiftP0(i).poke(false.B)
             }
-            dut.io.fftMode.poke(0.U) //calculate fft
+            dut.io.fftMode.poke(true.B) //calculate fft
             for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
                 dut.io.readDataSram0Bank(i).poke(0.U)
                 dut.io.readDataSram1Bank(i).poke(0.U)
@@ -367,12 +368,12 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
     }
 
     "FFTEngine should calculate IRFFT" in {
-        test(new FFTEngine).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
+        test(new FFTEngine).withAnnotations(Seq(WriteVcdAnnotation, VerilatorBackendAnnotation)) { dut =>
             //initialize
             for(i <- 0 to stageCnt by 1) {
                 dut.io.fftRShiftP0(i).poke(false.B)
             }
-            dut.io.fftMode.poke(true.B) //calculate ifft
+            dut.io.fftMode.poke(false.B) //calculate ifft
             for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
                 dut.io.readDataSram0Bank(i).poke(0.U)
                 dut.io.readDataSram1Bank(i).poke(0.U)
