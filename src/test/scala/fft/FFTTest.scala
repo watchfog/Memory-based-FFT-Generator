@@ -10,7 +10,7 @@ import chiseltest.simulator.VerilatorBackendAnnotation
 
 class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConfig {
     val OutputDataFlow = false
-    "FFTEngine should calculate RFFT" in {
+    "FFTEngine with fixedpoint should calculate RFFT" in {
         test(new FFTEngine).withAnnotations(Seq(WriteVcdAnnotation, VerilatorBackendAnnotation)) { dut =>
             //initialize
             for(i <- 0 to stageCnt by 1) {
@@ -45,8 +45,10 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 val n2 = 2 * n + 1
                 val t1: Double = n1 * 2.0 * Pi / fftLength.toDouble
                 val t2: Double = n2 * 2.0 * Pi / fftLength.toDouble
-                var temp1 = (1 * sin(t1) + 0 * cos(t1) + 2) * pow(2, 6)
-                var temp2 = (1 * sin(t2) + 0 * cos(t2) + 2) * pow(2, 6)
+                // var temp1 = (0 * sin(t1) + 0 * cos(t1) + 2) * pow(2, 6)
+                // var temp2 = (0 * sin(t2) + 0 * cos(t2) + 2) * pow(2, 6)
+                val temp1 = scala.util.Random.between(0, pow(2, 6))
+                val temp2 = scala.util.Random.between(0, pow(2, 6))
                 var tempU = (1 * round(temp2.abs) * pow(2, 16) + 1 * round(temp1.abs)).toLong.asUInt
                 fftRefIn(2 * n) = new Complex(temp1, 0)
                 fftRefIn(2 * n + 1) = new Complex(temp2, 0)
@@ -338,7 +340,7 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 var radixReverse = (0 until addrWidth).fold(0)((x, y) => x * 2 + radixUInt(y).litValue.toInt)
                 var radixUIntReverse = radixReverse.U
 
-                radixSum = (0 until parallelCnt).fold(0)((x, y) => x * 2 + (radixUIntReverse(y).litValue.toInt + radixUIntReverse(addrWidth - 1 -y).litValue.toInt) % 2)
+                radixSum = (0 until parallelCnt).fold(0)((x, y) => x * 2 + (radixUIntReverse(y).litValue.toInt + radixUIntReverse(addrWidth - 1 - y).litValue.toInt) % 2)
 
                 bankSel = radixSum & (pow(2, parallelCnt).toInt - 1)
                 bankAddr = radixReverse & (pow(2, addrWidth - parallelCnt).toInt - 1)
@@ -354,10 +356,10 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 var fftOut = complexUInt2Complex(sramData)
                 var fftDiffAbsR = (fftOut.re - fftRefOut(radix).re).abs
                 var fftDiffAbsI = (fftOut.im - fftRefOut(radix).im).abs
-                var fftCmR = fftOut.re + fftRefOut(radix).re
-                var fftCmI = fftOut.im + fftRefOut(radix).im
+                var fftCmR = fftOut.re.abs + fftRefOut(radix).re.abs
+                var fftCmI = fftOut.im.abs + fftRefOut(radix).im.abs
                 fftDiffAbsSum = fftDiffAbsSum + fftDiffAbsR + fftDiffAbsI
-                fftCmSum = fftCmSum + fftCmR + fftCmI
+                fftCmSum = fftCmSum + fftCmR + fftCmI 
 
                 println(s"$radix: " + complexUInt2Complex(sramData))
                 println(s"Ref: "  + fftRefOut(radix))
@@ -367,7 +369,7 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
         }
     }
 
-    "FFTEngine should calculate IRFFT" in {
+    "FFTEngine with fixedpoint should calculate IRFFT" in {
         test(new FFTEngine).withAnnotations(Seq(WriteVcdAnnotation, VerilatorBackendAnnotation)) { dut =>
             //initialize
             for(i <- 0 to stageCnt by 1) {
