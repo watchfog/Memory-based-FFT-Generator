@@ -9,29 +9,29 @@ class FFTTwiddle extends RawModule with DataConfig{
     val io = IO(new Bundle {
         val nk = Input(UInt())
         val twiLutCaseIndex = Input(UInt())
-        val wR = Output(FixedPoint((fftDataWidth + 2).W, (fftDataWidth + 0).BP))
-        val wI = Output(FixedPoint((fftDataWidth + 2).W, (fftDataWidth + 0).BP))
+        val wR = Output(FixedPoint((twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP))
+        val wI = Output(FixedPoint((twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP))
     })
 
     def cosGen(k: Int): Seq[FixedPoint] = {
         val times = (0 to k by 1)
             .map(i => (i * Pi) / (2 * k).toDouble)
-        val inits = times.map(t => FixedPoint.fromDouble(cos(t), (fftDataWidth + 2).W, (fftDataWidth + 0).BP))
+        val inits = times.map(t => FixedPoint.fromDouble(cos(t), (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP))
         inits
     }
 
     def sinGen(k: Int): Seq[FixedPoint] = {
         val times = (0 to k by 1)
             .map(i => (i * Pi) / (2 * k).toDouble)
-        val inits = times.map(t => FixedPoint.fromDouble(sin(t), (fftDataWidth + 2).W, (fftDataWidth + 0).BP))
+        val inits = times.map(t => FixedPoint.fromDouble(sin(t), (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP))
         inits
     }
    
     val twi_cos_tb1_p10_pre = cosGen(fftLength / 2)
     val twi_sin_tb1_p10_pre = sinGen(fftLength / 2)
 
-    val twi_cos_tb1_p10 = VecInit(twi_cos_tb1_p10_pre ++ Seq.fill(fftLength / 2 - 1)(FixedPoint(0, (fftDataWidth + 2).W, (fftDataWidth + 0).BP)))
-    val twi_sin_tb1_p10 = VecInit(twi_sin_tb1_p10_pre ++ Seq.fill(fftLength / 2 - 1)(FixedPoint(0, (fftDataWidth + 2).W, (fftDataWidth + 0).BP)))
+    val twi_cos_tb1_p10 = VecInit(twi_cos_tb1_p10_pre ++ Seq.fill(fftLength / 2 - 1)(FixedPoint(0, (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP)))
+    val twi_sin_tb1_p10 = VecInit(twi_sin_tb1_p10_pre ++ Seq.fill(fftLength / 2 - 1)(FixedPoint(0, (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP)))
 
     val idx_r = Mux((io.nk(addrWidth - 1) & io.nk(addrWidth - 1 - 1, 0).orR), (~io.nk + 1.U), io.nk)
     

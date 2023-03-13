@@ -52,15 +52,11 @@ class FFT3PipelineCalc extends Module with DataConfig{
     val sI2c = ShiftRegister(dataInSI1c, 1, FixedPoint(0, (fftDataWidth + 2).W, (fftDataWidth + 1).BP), io.state1c)
     val tR2c = ShiftRegister(dataInTR1c, 1, FixedPoint(0, (fftDataWidth + 2).W, (fftDataWidth + 1).BP), io.state1c)
     val tI2c = ShiftRegister(dataInTI1c, 1, FixedPoint(0, (fftDataWidth + 2).W, (fftDataWidth + 1).BP), io.state1c)
-    val wR2c = ShiftRegister(wR1c, 1, FixedPoint(0, (fftDataWidth + 2).W, (fftDataWidth + 0).BP), io.state1c)
-    val wI2c = ShiftRegister(wI1c, 1, FixedPoint(0, (fftDataWidth + 2).W, (fftDataWidth + 0).BP), io.state1c)
+    val wR2c = ShiftRegister(wR1c, 1, FixedPoint(0, (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP), io.state1c)
+    val wI2c = ShiftRegister(wI1c, 1, FixedPoint(0, (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP), io.state1c)
 
     val addTRI = tR2c + tI2c
     val addWRI = wR2c + wI2c
-    // val fftMultiply = Module(new FFTMultiply)
-    // fftMultiply.io.a := addTRI
-    // fftMultiply.io.b := addWRI
-    // fftMultiply.io.tc := true.B
     val multS = addTRI * addWRI
 
     val multRPre = tR2c * wR2c
