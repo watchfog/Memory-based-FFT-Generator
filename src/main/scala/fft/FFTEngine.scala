@@ -8,14 +8,14 @@ import scala.math._
 class FFTEngine extends Module with DataConfig{
     override val compileOptions = chisel3.ExplicitCompileOptions.Strict.copy(explicitInvalidate = false)
     val io = IO(new Bundle{
-        val readDataSram0Bank = Input(Vec(pow(2, parallelCnt).toInt, UInt(32.W)))
-        val readDataSram1Bank = Input(Vec(pow(2, parallelCnt).toInt, UInt(32.W)))
+        val readDataSram0Bank = Input(Vec(pow(2, parallelCnt).toInt, UInt((2 * (fftDataWidth + 2)).W)))
+        val readDataSram1Bank = Input(Vec(pow(2, parallelCnt).toInt, UInt((2 * (fftDataWidth + 2)).W)))
 
         val readEnableSram0Bank = Output(Vec(pow(2, parallelCnt).toInt, Bool()))
         val readEnableSram1Bank = Output(Vec(pow(2, parallelCnt).toInt, Bool()))
 
-        val writeDataSram0Bank = Output(Vec(pow(2, parallelCnt).toInt, UInt(32.W)))
-        val writeDataSram1Bank = Output(Vec(pow(2, parallelCnt).toInt, UInt(32.W)))
+        val writeDataSram0Bank = Output(Vec(pow(2, parallelCnt).toInt, UInt((2 * (fftDataWidth + 2)).W)))
+        val writeDataSram1Bank = Output(Vec(pow(2, parallelCnt).toInt, UInt((2 * (fftDataWidth + 2)).W)))
 
         val writeEnableSram0Bank = Output(Vec(pow(2, parallelCnt).toInt, Bool()))
         val writeEnableSram1Bank = Output(Vec(pow(2, parallelCnt).toInt, Bool()))

@@ -49,7 +49,7 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 // var temp2 = (0 * sin(t2) + 0 * cos(t2) + 2) * pow(2, 6)
                 val temp1 = scala.util.Random.between(0, pow(2, 6))
                 val temp2 = scala.util.Random.between(0, pow(2, 6))
-                var tempU = (1 * round(temp2.abs) * pow(2, 16) + 1 * round(temp1.abs)).toLong.asUInt
+                var tempU = (1 * round(temp2.abs) * pow(2, fftDataWidth + 2) + 1 * round(temp1.abs)).toLong.asUInt
                 fftRefIn(2 * n) = new Complex(temp1, 0)
                 fftRefIn(2 * n + 1) = new Complex(temp2, 0)
                 tempU
@@ -406,7 +406,7 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 val t2: Double = n2 * 2.0 * Pi / fftLength.toDouble
                 var temp1 = (1 * sin(t1) + 0 * cos(t1) + 2) * pow(2, 6)
                 var temp2 = (1 * sin(t2) + 0 * cos(t2) + 2) * pow(2, 6)
-                var tempU = (1 * round(temp2.abs) * pow(2, 16) + 1 * round(temp1.abs)).toLong.asUInt
+                var tempU = (1 * round(temp2.abs) * pow(2, fftDataWidth + 2) + 1 * round(temp1.abs)).toLong.asUInt
                 fftRefIn(2 * n) = new Complex(temp1, 0)
                 fftRefIn(2 * n + 1) = new Complex(temp2, 0)
                 tempU
@@ -415,19 +415,19 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
             def complex2ComplexUInt(dataIn : Complex) : UInt = {
                 var dataISign = dataIn.im < 0
                 var dataRSign = dataIn.re < 0
-                var dataIPre = if(dataISign == true) 32768 - dataIn.im.abs.round.toInt else dataIn.im.abs.round
-                var dataRPre = if(dataRSign == true) 32768 - dataIn.re.abs.round.toInt else dataIn.re.abs.round
-                if(dataIPre > 32767) {
+                var dataIPre = if(dataISign == true) pow(2, fftDataWidth + 1) - dataIn.im.abs.round.toInt else dataIn.im.abs.round.toInt
+                var dataRPre = if(dataRSign == true) pow(2, fftDataWidth + 1) - dataIn.re.abs.round.toInt else dataIn.re.abs.round.toInt
+                if(dataIPre > pow(2, fftDataWidth + 1) - 1) {
                     dataIPre = 0
                     dataISign = false
                 }
-                if(dataRPre > 32767) {
+                if(dataRPre > pow(2, fftDataWidth + 1) - 1) {
                     dataRPre = 0
                     dataRSign = false
                 }
-                var dataI = if(dataISign) (1 * pow(2, 15) + dataIPre) else (0 * pow(2, 15) + dataIPre)
-                var dataR = if(dataRSign) (1 * pow(2, 15) + dataRPre) else (0 * pow(2, 15) + dataRPre)
-                (dataI * pow(2, 16) + dataR).toLong.asUInt
+                var dataI = if(dataISign) (1 * pow(2, fftDataWidth + 1) + dataIPre) else (0 * pow(2, fftDataWidth + 1) + dataIPre)
+                var dataR = if(dataRSign) (1 * pow(2, fftDataWidth + 1) + dataRPre) else (0 * pow(2, fftDataWidth + 1) + dataRPre)
+                (dataI * pow(2, fftDataWidth + 2) + dataR).toLong.asUInt
             }
 
             var bankSel = 0
