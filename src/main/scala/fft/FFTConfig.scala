@@ -4,7 +4,7 @@ import chisel3.util.log2Ceil
 import scala.math._
 
 trait DataConfig{
-    val fftLength = 128
+    val fftLength = 16
     val fftDataWidth = 14
     val twiddleDataWidth = 12
     val parallelCnt = 1
