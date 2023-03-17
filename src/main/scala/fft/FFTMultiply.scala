@@ -6,14 +6,15 @@ import chisel3.experimental.FixedPoint
 
 class FFTMultiply extends RawModule with DataConfig{
     val io = IO(new Bundle {
-        val a = Input(new MyComplex())
-        val b = Input(new MyComplex())
+        val data = Input(new MyComplex())
+        val wR = Input(FixedPoint((twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP))
+        val wI = Input(FixedPoint((twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP))
         val product = Output(new MyComplex())
     })
 
-    val multS = (io.a.re + io.a.im) * (io.b.re + io.b.im)
-    val multR = io.a.re * io.b.re
-    val multI = io.a.im * io.b.im
+    val multS = (io.data.re + io.data.im) * (io.wR + io.wI)
+    val multR = io.data.re * io.wR
+    val multI = io.data.im * io.wI
 
     io.product.re := multR - multI
     io.product.im := multS - multR - multI

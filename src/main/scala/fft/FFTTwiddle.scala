@@ -7,8 +7,8 @@ import chisel3.experimental.FixedPoint
 
 class FFTTwiddle extends RawModule with DataConfig{
     val io = IO(new Bundle {
-        val nk = Input(UInt())
-        val twiLutCaseIndex = Input(UInt())
+        val nk = Input(UInt((addrWidth + 1).W))
+        val twiLutCaseIndex = Input(UInt((addrWidth + 1).W))
         val wR = Output(FixedPoint((twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP))
         val wI = Output(FixedPoint((twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP))
     })
