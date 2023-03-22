@@ -12,9 +12,10 @@ class FFT3PipelineR23Calc extends Module with DataConfig{
 
         val dataOut3c = Output(Vec(pow(2, 3).toInt, new MyComplex()))
 
-        val twiLutIdx = Input(UInt((addrWidth - 3).W))
+        val radixCount = Input(UInt((addrWidth - 1).W)) //1st stage point / 8 ? 2nd / 64? so bitwidth is addrwidth - 3 - phaseCount  * 3
 
         val calcMode = Input(UInt(2.W)) //b00 for r-2 b10 for r-2^2 b11 for r-2^3
+        val phaseCount = Input(UInt(log2Ceil(stageCnt + 1).W))
         val rShiftSym = Input(Bool())
         val isFFT = Input(Bool())
         val procMode = Input(Bool())
@@ -34,8 +35,10 @@ class FFT3PipelineR23Calc extends Module with DataConfig{
         case _ => 0
     }
 
+    val lastPhase = io.phaseCount === stageCnt.U
+
     val multiplyUnits = Seq.fill(9)(Module(new FFTMultiply))
-    val twiddleUnits = Seq.fill(9)(Module(new FFTTwiddle))
+    val twiddleUnits = Seq.fill(8)(Module(new FFTTwiddle))
 
     val dataInRnd = Wire(Vec(pow(2, 3).toInt, new MyComplex()))
     for(i <- 0 until 8 by 1) {
@@ -65,22 +68,29 @@ class FFT3PipelineR23Calc extends Module with DataConfig{
     val dataOut3cPrePre = Wire(Vec(pow(2, 3).toInt, new MyComplex()))
     val dataOut3cPre = Wire(Vec(pow(2, 3).toInt, new MyComplex()))
 
+    val twiLutIdxPreTable = Seq.tabulate(stageCnt) { i =>
+            (i.U) -> (io.radixCount >> (3 * i))
+        }
+    val twiLutIdxPre = Wire(UInt((addrWidth - 3).W))
+    twiLutIdxPre := MuxLookup(io.phaseCount, 0.U, twiLutIdxPreTable)
+
+    val twiLutIdxPre1c = ShiftRegister(twiLutIdxPre, 1, 0.U, true.B)
+
     Seq.tabulate(7) { i =>
-        twiddleUnits(i).io.nk := ((i + 1).U(3.W) * io.twiLutIdx) << 1
+        twiddleUnits(i).io.nk := Cat(((i + 1).U(3.W) * twiLutIdxPre1c) << (io.phaseCount * 3.U), 0.U(1.W))(addrWidth, 0) //1 more bit for preproc
         twiddleUnits(i).io.twiLutCaseIndex := twiLutCaseIdx1c
         wR1c(i) := twiddleUnits(i).io.wR
         wI1c(i) := twiddleUnits(i).io.wI
     }
 
-    twiddleUnits(7).io.nk := 1.U << (addrWidth - 3 + 1) // for preproc need to shift 1 more bits w18
+    val radixCount1c = ShiftRegister(io.radixCount, 1, 0.U, io.procMode)
+    twiddleUnits(7).io.nk := Mux(io.procMode, radixCount1c, Cat(1.U(2.W) << (addrWidth - 3), 0.U(1.W))) // shift to w*8, for preproc need to shift 1 more bits w18
     twiddleUnits(7).io.twiLutCaseIndex := twiLutCaseIdx1c
     wR1c(7) := twiddleUnits(7).io.wR
     wI1c(7) := twiddleUnits(7).io.wI
 
-    twiddleUnits(8).io.nk := 3.U << (addrWidth - 3 + 1) //w38
-    twiddleUnits(8).io.twiLutCaseIndex := twiLutCaseIdx1c
-    wR1c(8) := twiddleUnits(8).io.wR
-    wI1c(8) := twiddleUnits(8).io.wI
+    wR1c(8) := twiddleUnits(7).io.wI
+    wI1c(8) := -twiddleUnits(7).io.wR //w38 = -jw18
 
     wR2c.zip(wR1c).foreach { case(d1, d2) =>
         d1 := ShiftRegister(d2, 1, FixedPoint(0, (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP), io.state1c)
@@ -91,11 +101,11 @@ class FFT3PipelineR23Calc extends Module with DataConfig{
     }
 
     wR3c.zip(wR2c).foreach { case(d1, d2) =>
-        d1 := ShiftRegister(d2, 1, FixedPoint(0, (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP), io.state1c)
+        d1 := ShiftRegister(d2, 1, FixedPoint(0, (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP), io.state2c)
     }
 
     wI3c.zip(wI2c).foreach { case(d1, d2) =>
-        d1 := ShiftRegister(d2, 1, FixedPoint(0, (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP), io.state1c)
+        d1 := ShiftRegister(d2, 1, FixedPoint(0, (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP), io.state2c)
     }
 
     Seq.range(1, 8).foreach { i =>
@@ -104,7 +114,7 @@ class FFT3PipelineR23Calc extends Module with DataConfig{
         multiplyUnits(i - 1).io.wI := wI3c(getBitsReverse(i) - 1)
     }
 
-    multiplyUnits(7).io.data := data3cPrePre(5)
+    multiplyUnits(7).io.data := Mux(io.procMode, data2c(1), data3cPrePre(5))
     multiplyUnits(7).io.wR := wR2c(7)
     multiplyUnits(7).io.wI := wI2c(7)
 
@@ -118,8 +128,8 @@ class FFT3PipelineR23Calc extends Module with DataConfig{
     }
 
     data3c.zip(data3cPre).foreach { case(d1, d2) =>
-        d1.re := ShiftRegister(d2.re, 1, FixedPoint(0, (fftDataWidth + 2).W, (fftDataWidth + 1).BP), io.state1c)
-        d1.im := ShiftRegister(d2.im, 1, FixedPoint(0, (fftDataWidth + 2).W, (fftDataWidth + 1).BP), io.state1c)
+        d1.re := ShiftRegister(d2.re, 1, FixedPoint(0, (fftDataWidth + 2).W, (fftDataWidth + 1).BP), io.state2c)
+        d1.im := ShiftRegister(d2.im, 1, FixedPoint(0, (fftDataWidth + 2).W, (fftDataWidth + 1).BP), io.state2c)
     }
 
     Seq.tabulate(8) { i =>
@@ -178,7 +188,7 @@ class FFT3PipelineR23Calc extends Module with DataConfig{
         dataOut3cPre(0) := dataOut3cPrePre(0)
 
         Seq.range(1, 8).foreach { i =>
-            dataOut3cPre(i) := multiplyUnits(i - 1).io.product
+            dataOut3cPre(i) := Mux(lastPhase, dataOut3cPrePre(i), multiplyUnits(i - 1).io.product)
         }
     } .elsewhen(io.calcMode === 2.U) {
         //stage 0
@@ -202,7 +212,7 @@ class FFT3PipelineR23Calc extends Module with DataConfig{
         Seq.tabulate(8) { i =>
             dataOut3cPre(i) := dataOut3cPrePre(i)
         }
-    } .otherwise {
+    } .elsewhen(io.calcMode === 1.U && !io.procMode) {
         //stage 0
         //skip butterfly 0
         Seq.tabulate(8) { i =>
@@ -211,20 +221,52 @@ class FFT3PipelineR23Calc extends Module with DataConfig{
 
         //stage 1
         //skip butterfly 1
-        Seq(0, 1, 2, 4, 5, 6).foreach { i =>
-            data3cPre(i) := data3cPrePre(i)
+        Seq.tabulate(8) { i =>
+            data3cPre(i) := data2c(i)
         }
 
-        data3cPre(3).re := data3cPrePre(3).im
-        data3cPre(3).im := -data3cPrePre(3).re
+        //stage 2
+        Seq.tabulate(8) { i =>
+            dataOut3cPre(i) := dataOut3cPrePre(i)
+        }
+    } .elsewhen(io.calcMode === 1.U && io.procMode) { //procPhase 1
+        //stage 0
+        //skip butterfly 0
+        Seq.tabulate(8) { i =>
+            data2cPre(i) := dataIn1c(i)
+        }
 
-        data3cPre(7).re := data3cPrePre(7).im
-        data3cPre(7).im := -data3cPrePre(7).re
+        //stage 1
+        //skip butterfly 1
+        Seq(0, 2, 3, 4, 5, 6, 7).foreach { i =>
+            data3cPre(i) := data2c(i)
+        }
+
+        data3cPre(1) := multiplyUnits(7).io.product //get t * wn
+
+        //stage 2
+        Seq.tabulate(8) { i =>
+            dataOut3cPre(i) := dataOut3cPrePre(i)
+        }
+    } .otherwise { //procPhase 0
+        //stage 0
+        //skip butterfly 0
+        Seq.tabulate(8) { i =>
+            data2cPre(i) := dataIn1c(i)
+        }
+
+        //stage 1
+        //skip butterfly 1
+        Seq(0, 2, 3, 4, 5, 6, 7).foreach { i =>
+            data3cPre(i) := data2c(i)
+        }
+
+        data3cPre(1).re := data2c(1).re
+        data3cPre(1).im := -data2c(1).im
 
         //stage 2
         Seq.tabulate(8) { i =>
             dataOut3cPre(i) := dataOut3cPrePre(i)
         }
     }
-
 }
