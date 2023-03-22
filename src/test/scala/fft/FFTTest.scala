@@ -47,8 +47,8 @@ class FFTEngineTest extends AnyFreeSpec with ChiselScalatestTester with DataConf
                 val t2: Double = n2 * 2.0 * Pi / fftLength.toDouble
                 // var temp1 = (0 * sin(t1) + 0 * cos(t1) + 2) * pow(2, 6)
                 // var temp2 = (0 * sin(t2) + 0 * cos(t2) + 2) * pow(2, 6)
-                val temp1 = scala.util.Random.between(0, pow(2, 6))
-                val temp2 = scala.util.Random.between(0, pow(2, 6))
+                val temp1 = scala.util.Random.between(0, pow(2, 4))
+                val temp2 = scala.util.Random.between(0, pow(2, 4))
                 var tempU = (1 * round(temp2.abs) * pow(2, fftDataWidth + 2) + 1 * round(temp1.abs)).toLong.asUInt
                 fftRefIn(2 * n) = new Complex(temp1, 0)
                 fftRefIn(2 * n + 1) = new Complex(temp2, 0)

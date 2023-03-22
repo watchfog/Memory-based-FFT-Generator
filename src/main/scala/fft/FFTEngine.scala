@@ -198,6 +198,29 @@ class FFTEngine extends Module with DataConfig{
                 nk(i) := Cat(radixCount(radixCount.getWidth - 1 - 1, 0), i.U((parallelCnt - 1).W)) & ~(Cat(0.U(1.W), VecInit(Seq.fill(stageCnt)(1.U(1.W))).asUInt) >> phaseCount)
             }
         } 
+    } else if(parallelCnt == 4) {
+        when(phaseCount === FFTPhaseVal) {
+            for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+                nk(i) := Cat(i.U, radixCount(radixCount.getWidth - parallelCnt - 1, 0))
+            }
+        } .elsewhen(phaseCount === FFTPhaseValM1) {
+            for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+                if(fftLength == 16) {
+                    nk(i) := Cat(i.U, 0.U(1.W))
+                } else {
+                    nk(i) := Cat(i.U, radixCount(radixCount.getWidth - parallelCnt - 1, 1), 0.U(1.W))
+                }
+                
+            }
+        } .elsewhen(phaseCount === FFTPhaseValM1 - 1.U) {
+            for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+                    nk(i) := Cat(i.U, radixCount(radixCount.getWidth - parallelCnt - 1, 2), 0.U(2.W))
+            }
+        } .otherwise {
+            for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+                nk(i) := Cat(radixCount(radixCount.getWidth - 1 - 1, 0), i.U((parallelCnt - 1).W)) & ~(Cat(0.U(1.W), VecInit(Seq.fill(stageCnt)(1.U(1.W))).asUInt) >> phaseCount)
+            }
+        } 
     }
 
     def cyclicShiftL(data: UInt, n: UInt): UInt ={
@@ -240,6 +263,28 @@ class FFTEngine extends Module with DataConfig{
                 addrTKernelPre(i) := cyclicShiftR(Cat(1.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp), 1.U)
             } 
         } .otherwise {
+            for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+                addrSKernelPre(i) := cyclicShiftL(Cat(radixCountTemp, i.U((parallelCnt - 1).W), 0.U(1.W)), phaseCount)
+                addrTKernelPre(i) := cyclicShiftL(Cat(radixCountTemp, i.U((parallelCnt - 1).W), 1.U(1.W)), phaseCount)
+            }
+        }
+    } else if(parallelCnt == 4){
+        when(phaseCount === FFTPhaseVal) {
+            for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+                addrSKernelPre(i) := cyclicShiftR(Cat(0.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp), 0.U)
+                addrTKernelPre(i) := cyclicShiftR(Cat(1.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp), 0.U) 
+            }
+        } .elsewhen(phaseCount === FFTPhaseValM1) {
+            for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+                addrSKernelPre(i) := cyclicShiftR(Cat(0.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp), 1.U)
+                addrTKernelPre(i) := cyclicShiftR(Cat(1.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp), 1.U)
+            } 
+        } .elsewhen(phaseCount === (FFTPhaseValM1 - 1.U)) {
+            for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+                addrSKernelPre(i) := cyclicShiftR(Cat(0.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp), 2.U)
+                addrTKernelPre(i) := cyclicShiftR(Cat(1.U(1.W), i.U((parallelCnt - 1).W), radixCountTemp), 2.U)
+            } 
+        }.otherwise {
             for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
                 addrSKernelPre(i) := cyclicShiftL(Cat(radixCountTemp, i.U((parallelCnt - 1).W), 0.U(1.W)), phaseCount)
                 addrTKernelPre(i) := cyclicShiftL(Cat(radixCountTemp, i.U((parallelCnt - 1).W), 1.U(1.W)), phaseCount)
