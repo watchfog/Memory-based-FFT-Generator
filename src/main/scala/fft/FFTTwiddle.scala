@@ -5,10 +5,10 @@ import chisel3.util._
 import scala.math._
 import chisel3.experimental.FixedPoint
 
-class FFTTwiddle extends RawModule with DataConfig{
+class FFTTwiddle(mode: Int) extends RawModule with DataConfig{ //0 for proc
     val io = IO(new Bundle {
-        val nk = Input(UInt())
-        val twiLutCaseIndex = Input(UInt())
+        val nk = Input(UInt((addrWidth + 1 - mode).W))
+        val twiLutCaseIndex = Input(UInt(2.W))
         val wR = Output(FixedPoint((twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP))
         val wI = Output(FixedPoint((twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP))
     })
@@ -27,21 +27,23 @@ class FFTTwiddle extends RawModule with DataConfig{
         inits
     }
    
-    val twi_cos_tb1_p10_pre = cosGen(fftLength / 2)
-    val twi_sin_tb1_p10_pre = sinGen(fftLength / 2)
+    val twi_cos_tb1_p10_pre = cosGen(fftLength / (if(mode == 0) 2 else 4))
+    val twi_sin_tb1_p10_pre = sinGen(fftLength / (if(mode == 0) 2 else 4))
 
-    val twi_cos_tb1_p10 = VecInit(twi_cos_tb1_p10_pre ++ Seq.fill(fftLength / 2 - 1)(FixedPoint(0, (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP)))
-    val twi_sin_tb1_p10 = VecInit(twi_sin_tb1_p10_pre ++ Seq.fill(fftLength / 2 - 1)(FixedPoint(0, (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP)))
+    val twi_cos_tb1_p10 = VecInit(twi_cos_tb1_p10_pre)
+    val twi_sin_tb1_p10 = VecInit(twi_sin_tb1_p10_pre)
 
-    val idx_r = Mux((io.nk(addrWidth - 1) & io.nk(addrWidth - 1 - 1, 0).orR), (~io.nk + 1.U), io.nk)
+    val idx_r_pre = Mux(io.nk(addrWidth - mode), (~io.nk + 1.U), io.nk)(addrWidth - mode - 1, 0)
+
+    val idx_r = Mux((idx_r_pre(addrWidth - mode - 1) & idx_r_pre(addrWidth - mode - 2, 0).orR), (~idx_r_pre + 1.U), idx_r_pre)(addrWidth - mode - 1, 0)
     
-    val lut_chg_sign_flag_r = io.nk(addrWidth - 1) & (io.nk(addrWidth - 1 - 1, 0).orR)
+    val lut_chg_sign_flag_r = idx_r_pre(addrWidth - mode - 1) & idx_r_pre(addrWidth - mode - 2, 0).orR
 
     val lut_w_r = twi_cos_tb1_p10(idx_r)
 
-    val idx_i = idx_r(addrWidth - 1, 0)
+    val idx_i = idx_r(addrWidth - mode - 1, 0)
 
-    val lut_chg_sign_flag_i = true.B
+    val lut_chg_sign_flag_i = !io.nk(addrWidth - mode)
 
     val lut_w_i = twi_sin_tb1_p10(idx_i)
 

@@ -11,4 +11,5 @@ trait DataConfig{
     val addrWidth = log2Ceil(fftLength)
     val stageCnt = addrWidth - 1
     val midBankSel = pow(2, parallelCnt - 1).toInt
+    val needProc = true
 }

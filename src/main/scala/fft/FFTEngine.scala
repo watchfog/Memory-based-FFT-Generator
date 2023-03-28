@@ -38,7 +38,7 @@ class FFTEngine extends Module with DataConfig{
     val ProcCycleVal = (fftLength / 2 - 1).U
     val ProcLatency = 3.U
     val ProcPhaseVal = 1.U
-
+    
     val waitKick :: kernelPP :: kernelPPL :: kernelPPGap :: procPP :: procPPL :: procPPGap :: fftDone :: Nil = Enum(8)
 
     val isFFT = io.fftMode
@@ -49,61 +49,97 @@ class FFTEngine extends Module with DataConfig{
 
     val phaseCount = RegInit(0.U(log2Ceil(stageCnt + 1).W))
 
-    switch(stateReg) {
-        is(waitKick) {
-            when(io.fftEngineKick) {
-                stateReg := Mux(isFFT, kernelPP, procPP)
-            } .otherwise {
-                stateReg := stateReg
+    if(needProc) {
+        switch(stateReg) {
+            is(waitKick) {
+                    when(io.fftEngineKick) {
+                        stateReg := Mux(isFFT, kernelPP, procPP)
+                    } .otherwise {
+                        stateReg := stateReg
+                    }
+            }
+            is(kernelPP) {
+                when(radixCount === FFTCycleVal) {
+                    stateReg := kernelPPL
+                } .otherwise{
+                    stateReg := stateReg
+                }
+            }
+            is(kernelPPL) {
+                when(radixCount === FFTLatency) {
+                    stateReg := kernelPPGap
+                } .otherwise{
+                    stateReg := stateReg
+                }
+            }
+            is(kernelPPGap) {
+                when(phaseCount === FFTPhaseVal) {
+                    stateReg := Mux(isFFT, procPP, fftDone)
+                } .otherwise{
+                    stateReg := kernelPP
+                }
+            }
+            is(procPP) {
+                when(radixCount === ProcCycleVal) {
+                    stateReg := procPPL
+                } .otherwise{
+                    stateReg := stateReg
+                }
+            }
+            is(procPPL) {
+                when(radixCount === ProcLatency) {
+                    stateReg := procPPGap
+                } .otherwise{
+                    stateReg := stateReg
+                }
+            }
+            is(procPPGap) {
+                when(phaseCount === ProcPhaseVal) {
+                    stateReg := Mux(isFFT, fftDone, kernelPP)
+                } .otherwise{
+                    stateReg := procPP
+                }
+            }
+            is(fftDone) {
+                stateReg := waitKick
             }
         }
-        is(kernelPP) {
-            when(radixCount === FFTCycleVal) {
-                stateReg := kernelPPL
-            } .otherwise{
-                stateReg := stateReg
+    } else {
+        switch(stateReg) {
+            is(waitKick) {
+                    when(io.fftEngineKick) {
+                        stateReg := kernelPP
+                    } .otherwise {
+                        stateReg := stateReg
+                    }
             }
-        }
-        is(kernelPPL) {
-            when(radixCount === FFTLatency) {
-                stateReg := kernelPPGap
-            } .otherwise{
-                stateReg := stateReg
+            is(kernelPP) {
+                when(radixCount === FFTCycleVal) {
+                    stateReg := kernelPPL
+                } .otherwise{
+                    stateReg := stateReg
+                }
             }
-        }
-        is(kernelPPGap) {
-            when(phaseCount === FFTPhaseVal) {
-                stateReg := Mux(isFFT, procPP, fftDone)
-            } .otherwise{
-                stateReg := kernelPP
+            is(kernelPPL) {
+                when(radixCount === FFTLatency) {
+                    stateReg := kernelPPGap
+                } .otherwise{
+                    stateReg := stateReg
+                }
             }
-        }
-        is(procPP) {
-            when(radixCount === ProcCycleVal) {
-                stateReg := procPPL
-            } .otherwise{
-                stateReg := stateReg
+            is(kernelPPGap) {
+                when(phaseCount === FFTPhaseVal) {
+                    stateReg := Mux(isFFT, procPP, fftDone)
+                } .otherwise{
+                    stateReg := kernelPP
+                }
             }
-        }
-        is(procPPL) {
-            when(radixCount === ProcLatency) {
-                stateReg := procPPGap
-            } .otherwise{
-                stateReg := stateReg
+            is(fftDone) {
+                stateReg := waitKick
             }
-        }
-        is(procPPGap) {
-            when(phaseCount === ProcPhaseVal) {
-                stateReg := Mux(isFFT, fftDone, kernelPP)
-            } .otherwise{
-                stateReg := procPP
-            }
-        }
-        is(fftDone) {
-            stateReg := waitKick
         }
     }
-
+    
     val radixInit = (stateReg === waitKick) |
     ((stateReg === kernelPP) && (radixCount === FFTCycleVal)) |
     ((stateReg === kernelPPL) && (radixCount === FFTLatency)) |
@@ -435,12 +471,16 @@ class FFTEngine extends Module with DataConfig{
         val addrSBankSel1c = ShiftRegister(addrSBankSel, 1, 0.U, true.B)
         val addrTBankSel1c = ShiftRegister(addrTBankSel, 1, 1.U, true.B)
 
-        val fftCalc = Module(new FFT3PipelineCalc)
+        val fftCalc = Module(new FFT3PipelineCalc(i))
         fftCalc.io.dataInSR := dataInPre(addrSBankSel1c).re
         fftCalc.io.dataInSI := Mux(sameAddr1c && phaseCount === 1.U, FixedPoint(0, (fftDataWidth + 2).W, (fftDataWidth + 1).BP), dataInPre(addrSBankSel1c).im)
         fftCalc.io.dataInTR := Mux(sameAddr1c && phaseCount === 1.U, dataInPre(addrTBankSel1c).im, dataInPre(addrTBankSel1c).re)
         fftCalc.io.dataInTI := Mux(sameAddr1c && phaseCount === 1.U, FixedPoint(0, (fftDataWidth + 2).W, (fftDataWidth + 1).BP), dataInPre(addrTBankSel1c).im)
-        fftCalc.io.nk := Mux(procState, radixCount(addrWidth - 1, 0), Cat(nk(i)(addrWidth - 1 - 1, 0), 0.U(1.W)))
+        if(i == 0) {
+            fftCalc.io.nk := Mux(procState, radixCount(addrWidth - 1, 0), Cat(nk(i)(addrWidth - 1 - 1, 0), 0.U(1.W)))
+        } else {
+            fftCalc.io.nk := nk(i)(addrWidth - 1 - 1, 0)
+        }
         fftCalc.io.rShiftSym := Mux(kernelState1c, io.fftRShiftP0(phaseCount), phaseCount(0))
         fftCalc.io.isFFT := isFFT
         fftCalc.io.procMode := (~phaseCount(0) && procState2c)

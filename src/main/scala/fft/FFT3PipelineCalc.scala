@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import chisel3.experimental.FixedPoint
 
-class FFT3PipelineCalc extends Module with DataConfig{
+class FFT3PipelineCalc(mode: Int) extends Module with DataConfig{
     override val compileOptions = chisel3.ExplicitCompileOptions.Strict.copy(explicitInvalidate = false)
     val io = IO(new Bundle{
         val dataInSR = Input(FixedPoint((fftDataWidth + 2).W, (fftDataWidth + 1).BP))
@@ -42,7 +42,7 @@ class FFT3PipelineCalc extends Module with DataConfig{
 
     val twiLutCaseIdx1c = Mux(io.isFFT, 0.U(2.W), 1.U(2.W))
 
-    val fftTwiddle = Module(new FFTTwiddle)
+    val fftTwiddle = Module(new FFTTwiddle(if(mode == 0 && needProc) 0 else 1))
     fftTwiddle.io.nk := twiLutIdx1c
     fftTwiddle.io.twiLutCaseIndex := twiLutCaseIdx1c
     val wR1c = fftTwiddle.io.wR
