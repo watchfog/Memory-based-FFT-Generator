@@ -38,7 +38,7 @@ class FFT3PipelineR23Calc extends Module with DataConfig{
     val lastPhase = io.phaseCount === stageCnt.U
 
     val multiplyUnits = Seq.fill(9)(Module(new FFTMultiply))
-    val twiddleUnits = Seq.fill(8)(Module(new FFTTwiddle))
+    val twiddleUnits = Seq.tabulate(7) {i => Module(new FFTTwiddle(if(i == 0) 0 else 1))}
 
     val dataInRnd = Wire(Vec(pow(2, 3).toInt, new MyComplex()))
     for(i <- 0 until 8 by 1) {
@@ -76,21 +76,24 @@ class FFT3PipelineR23Calc extends Module with DataConfig{
 
     val twiLutIdxPre1c = ShiftRegister(twiLutIdxPre, 1, 0.U, true.B)
 
-    Seq.tabulate(7) { i =>
-        twiddleUnits(i).io.nk := Cat(((i + 1).U(3.W) * twiLutIdxPre1c) << (io.phaseCount * 3.U), 0.U(1.W))(addrWidth, 0) //1 more bit for preproc
+    val radixCount1c = ShiftRegister(io.radixCount, 1, 0.U, io.procMode)
+    twiddleUnits(0).io.nk := Mux(io.procMode, radixCount1c, Cat(((0 + 1).U(3.W) * twiLutIdxPre1c) << (io.phaseCount * 3.U), 0.U(1.W))(addrWidth, 0)) //1 more bit for preproc
+    twiddleUnits(0).io.twiLutCaseIndex := twiLutCaseIdx1c
+    wR1c(0) := twiddleUnits(0).io.wR
+    wI1c(0) := twiddleUnits(0).io.wI
+
+    Seq.range(1, 7).foreach { i =>
+        twiddleUnits(i).io.nk := (((i + 1).U(3.W) * twiLutIdxPre1c) << (io.phaseCount * 3.U))(addrWidth - 1, 0) //1 more bit for preproc
         twiddleUnits(i).io.twiLutCaseIndex := twiLutCaseIdx1c
         wR1c(i) := twiddleUnits(i).io.wR
         wI1c(i) := twiddleUnits(i).io.wI
     }
 
-    val radixCount1c = ShiftRegister(io.radixCount, 1, 0.U, io.procMode)
-    twiddleUnits(7).io.nk := Mux(io.procMode, radixCount1c, Cat(1.U(2.W) << (addrWidth - 3), 0.U(1.W))) // shift to w*8, for preproc need to shift 1 more bits w18
-    twiddleUnits(7).io.twiLutCaseIndex := twiLutCaseIdx1c
-    wR1c(7) := twiddleUnits(7).io.wR
-    wI1c(7) := twiddleUnits(7).io.wI
+    wR1c(7) := FixedPoint.fromDouble(cos(-2 * Pi / 8.0), (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP)
+    wI1c(7) := FixedPoint.fromDouble(sin(-2 * Pi / 8.0), (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP)
 
-    wR1c(8) := twiddleUnits(7).io.wI
-    wI1c(8) := -twiddleUnits(7).io.wR //w38 = -jw18
+    wR1c(8) := wI1c(7)
+    wI1c(8) := -wR1c(7)
 
     wR2c.zip(wR1c).foreach { case(d1, d2) =>
         d1 := ShiftRegister(d2, 1, FixedPoint(0, (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP), io.state1c)
@@ -115,8 +118,8 @@ class FFT3PipelineR23Calc extends Module with DataConfig{
     }
 
     multiplyUnits(7).io.data := Mux(io.procMode, data2c(1), data3cPrePre(5))
-    multiplyUnits(7).io.wR := wR2c(7)
-    multiplyUnits(7).io.wI := wI2c(7)
+    multiplyUnits(7).io.wR := Mux(io.procMode, wR2c(0), wR2c(7))
+    multiplyUnits(7).io.wI := Mux(io.procMode, wI2c(0), wI2c(7))
 
     multiplyUnits(8).io.data := data3cPrePre(7)
     multiplyUnits(8).io.wR := wR2c(8)

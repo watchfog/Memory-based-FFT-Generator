@@ -1,4 +1,4 @@
-circuit FFTEngine :
+circuit FFTTop :
   module FFTMultiply :
     output io : { flip data : { im : Fixed<16><<15>>, re : Fixed<16><<15>>}, flip wR : Fixed<14><<12>>, flip wI : Fixed<14><<12>>, product : { im : Fixed<16><<15>>, re : Fixed<16><<15>>}}
 
@@ -5683,7 +5683,7 @@ circuit FFTEngine :
 
   module FFTEngine :
     input clock : Clock
-    input reset : UInt<1>
+    input reset : Reset
     output io : { flip readDataSram0Bank : UInt<32>[8], flip readDataSram1Bank : UInt<32>[8], readEnableSram0Bank : UInt<1>[8], readEnableSram1Bank : UInt<1>[8], writeDataSram0Bank : UInt<32>[8], writeDataSram1Bank : UInt<32>[8], writeEnableSram0Bank : UInt<1>[8], writeEnableSram1Bank : UInt<1>[8], addrSram0Bank : UInt<7>[8], addrSram1Bank : UInt<7>[8], fftDone : UInt<1>, flip fftEngineKick : UInt<1>, flip fftMode : UInt<1>, flip fftRShiftP0 : UInt<1>[4]}
 
     clock is invalid
@@ -8820,4 +8820,452 @@ circuit FFTEngine :
       reset => (reset, UInt<1>("h0")) @[FFTEngine.scala 467:29]
     fftDoneReg <= donePre @[FFTEngine.scala 467:29]
     io.fftDone <= fftDoneReg @[FFTEngine.scala 468:16]
+
+  module FFTSram :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_1 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_2 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_3 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_4 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_5 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_6 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_7 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_8 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_9 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_10 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_11 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_12 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_13 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_14 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTSram_15 :
+    input clock : Clock
+    input reset : Reset
+    output io : { flip readEnable : UInt<1>, flip writeEnable : UInt<1>, flip addr : UInt<7>, flip dataIn : UInt<32>, dataOut : UInt<32>}
+
+    smem mem : UInt<32> [128] @[FFTSram.scala 16:24]
+    io.dataOut is invalid @[FFTSram.scala 17:14]
+    when io.readEnable : @[FFTSram.scala 18:23]
+      infer mport rdwrPort = mem[io.addr], clock @[FFTSram.scala 19:23]
+      when io.writeEnable : @[FFTSram.scala 20:27]
+        rdwrPort <= io.dataIn @[FFTSram.scala 20:38]
+      else :
+        io.dataOut <= rdwrPort @[FFTSram.scala 21:34]
+
+  module FFTTop :
+    input clock : Clock
+    input reset : UInt<1>
+    output io : { fftDone : UInt<1>, flip fftEngineKick : UInt<1>, flip fftMode : UInt<1>, flip fftRShiftP0 : UInt<1>[4], flip externalMode : UInt<1>, readDataSram0Bank : UInt<32>[8], readDataSram1Bank : UInt<32>[8], flip readEnableSram0Bank : UInt<1>[8], flip readEnableSram1Bank : UInt<1>[8], flip writeDataSram0Bank : UInt<32>[8], flip writeDataSram1Bank : UInt<32>[8], flip writeEnableSram0Bank : UInt<1>[8], flip writeEnableSram1Bank : UInt<1>[8], flip addrSram0Bank : UInt<7>[8], flip addrSram1Bank : UInt<7>[8]}
+
+    inst fftEngine of FFTEngine @[FFTTop.scala 31:27]
+    fftEngine.clock <= clock
+    fftEngine.reset <= reset
+    inst fftSram0_0 of FFTSram @[FFTTop.scala 32:62]
+    fftSram0_0.clock <= clock
+    fftSram0_0.reset <= reset
+    inst fftSram0_1 of FFTSram_1 @[FFTTop.scala 32:62]
+    fftSram0_1.clock <= clock
+    fftSram0_1.reset <= reset
+    inst fftSram0_2 of FFTSram_2 @[FFTTop.scala 32:62]
+    fftSram0_2.clock <= clock
+    fftSram0_2.reset <= reset
+    inst fftSram0_3 of FFTSram_3 @[FFTTop.scala 32:62]
+    fftSram0_3.clock <= clock
+    fftSram0_3.reset <= reset
+    inst fftSram0_4 of FFTSram_4 @[FFTTop.scala 32:62]
+    fftSram0_4.clock <= clock
+    fftSram0_4.reset <= reset
+    inst fftSram0_5 of FFTSram_5 @[FFTTop.scala 32:62]
+    fftSram0_5.clock <= clock
+    fftSram0_5.reset <= reset
+    inst fftSram0_6 of FFTSram_6 @[FFTTop.scala 32:62]
+    fftSram0_6.clock <= clock
+    fftSram0_6.reset <= reset
+    inst fftSram0_7 of FFTSram_7 @[FFTTop.scala 32:62]
+    fftSram0_7.clock <= clock
+    fftSram0_7.reset <= reset
+    inst fftSram1_0 of FFTSram_8 @[FFTTop.scala 33:62]
+    fftSram1_0.clock <= clock
+    fftSram1_0.reset <= reset
+    inst fftSram1_1 of FFTSram_9 @[FFTTop.scala 33:62]
+    fftSram1_1.clock <= clock
+    fftSram1_1.reset <= reset
+    inst fftSram1_2 of FFTSram_10 @[FFTTop.scala 33:62]
+    fftSram1_2.clock <= clock
+    fftSram1_2.reset <= reset
+    inst fftSram1_3 of FFTSram_11 @[FFTTop.scala 33:62]
+    fftSram1_3.clock <= clock
+    fftSram1_3.reset <= reset
+    inst fftSram1_4 of FFTSram_12 @[FFTTop.scala 33:62]
+    fftSram1_4.clock <= clock
+    fftSram1_4.reset <= reset
+    inst fftSram1_5 of FFTSram_13 @[FFTTop.scala 33:62]
+    fftSram1_5.clock <= clock
+    fftSram1_5.reset <= reset
+    inst fftSram1_6 of FFTSram_14 @[FFTTop.scala 33:62]
+    fftSram1_6.clock <= clock
+    fftSram1_6.reset <= reset
+    inst fftSram1_7 of FFTSram_15 @[FFTTop.scala 33:62]
+    fftSram1_7.clock <= clock
+    fftSram1_7.reset <= reset
+    fftEngine.io.readDataSram0Bank[0] <= fftSram0_0.io.dataOut @[FFTTop.scala 35:43]
+    fftEngine.io.readDataSram1Bank[0] <= fftSram1_0.io.dataOut @[FFTTop.scala 36:43]
+    io.readDataSram0Bank[0] <= fftSram0_0.io.dataOut @[FFTTop.scala 37:33]
+    io.readDataSram1Bank[0] <= fftSram1_0.io.dataOut @[FFTTop.scala 38:33]
+    node _fftSram0_0_io_readEnable_T = mux(io.externalMode, io.readEnableSram0Bank[0], fftEngine.io.readEnableSram0Bank[0]) @[FFTTop.scala 40:41]
+    fftSram0_0.io.readEnable <= _fftSram0_0_io_readEnable_T @[FFTTop.scala 40:35]
+    node _fftSram1_0_io_readEnable_T = mux(io.externalMode, io.readEnableSram1Bank[0], fftEngine.io.readEnableSram1Bank[0]) @[FFTTop.scala 41:41]
+    fftSram1_0.io.readEnable <= _fftSram1_0_io_readEnable_T @[FFTTop.scala 41:35]
+    node _fftSram0_0_io_dataIn_T = mux(io.externalMode, io.writeDataSram0Bank[0], fftEngine.io.writeDataSram0Bank[0]) @[FFTTop.scala 42:37]
+    fftSram0_0.io.dataIn <= _fftSram0_0_io_dataIn_T @[FFTTop.scala 42:31]
+    node _fftSram1_0_io_dataIn_T = mux(io.externalMode, io.writeDataSram1Bank[0], fftEngine.io.writeDataSram1Bank[0]) @[FFTTop.scala 43:37]
+    fftSram1_0.io.dataIn <= _fftSram1_0_io_dataIn_T @[FFTTop.scala 43:31]
+    node _fftSram0_0_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram0Bank[0], fftEngine.io.writeEnableSram0Bank[0]) @[FFTTop.scala 44:42]
+    fftSram0_0.io.writeEnable <= _fftSram0_0_io_writeEnable_T @[FFTTop.scala 44:36]
+    node _fftSram1_0_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram1Bank[0], fftEngine.io.writeEnableSram1Bank[0]) @[FFTTop.scala 45:42]
+    fftSram1_0.io.writeEnable <= _fftSram1_0_io_writeEnable_T @[FFTTop.scala 45:36]
+    node _fftSram0_0_io_addr_T = mux(io.externalMode, io.addrSram0Bank[0], fftEngine.io.addrSram0Bank[0]) @[FFTTop.scala 46:35]
+    fftSram0_0.io.addr <= _fftSram0_0_io_addr_T @[FFTTop.scala 46:29]
+    node _fftSram1_0_io_addr_T = mux(io.externalMode, io.addrSram1Bank[0], fftEngine.io.addrSram1Bank[0]) @[FFTTop.scala 47:35]
+    fftSram1_0.io.addr <= _fftSram1_0_io_addr_T @[FFTTop.scala 47:29]
+    fftEngine.io.readDataSram0Bank[1] <= fftSram0_1.io.dataOut @[FFTTop.scala 35:43]
+    fftEngine.io.readDataSram1Bank[1] <= fftSram1_1.io.dataOut @[FFTTop.scala 36:43]
+    io.readDataSram0Bank[1] <= fftSram0_1.io.dataOut @[FFTTop.scala 37:33]
+    io.readDataSram1Bank[1] <= fftSram1_1.io.dataOut @[FFTTop.scala 38:33]
+    node _fftSram0_1_io_readEnable_T = mux(io.externalMode, io.readEnableSram0Bank[1], fftEngine.io.readEnableSram0Bank[1]) @[FFTTop.scala 40:41]
+    fftSram0_1.io.readEnable <= _fftSram0_1_io_readEnable_T @[FFTTop.scala 40:35]
+    node _fftSram1_1_io_readEnable_T = mux(io.externalMode, io.readEnableSram1Bank[1], fftEngine.io.readEnableSram1Bank[1]) @[FFTTop.scala 41:41]
+    fftSram1_1.io.readEnable <= _fftSram1_1_io_readEnable_T @[FFTTop.scala 41:35]
+    node _fftSram0_1_io_dataIn_T = mux(io.externalMode, io.writeDataSram0Bank[1], fftEngine.io.writeDataSram0Bank[1]) @[FFTTop.scala 42:37]
+    fftSram0_1.io.dataIn <= _fftSram0_1_io_dataIn_T @[FFTTop.scala 42:31]
+    node _fftSram1_1_io_dataIn_T = mux(io.externalMode, io.writeDataSram1Bank[1], fftEngine.io.writeDataSram1Bank[1]) @[FFTTop.scala 43:37]
+    fftSram1_1.io.dataIn <= _fftSram1_1_io_dataIn_T @[FFTTop.scala 43:31]
+    node _fftSram0_1_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram0Bank[1], fftEngine.io.writeEnableSram0Bank[1]) @[FFTTop.scala 44:42]
+    fftSram0_1.io.writeEnable <= _fftSram0_1_io_writeEnable_T @[FFTTop.scala 44:36]
+    node _fftSram1_1_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram1Bank[1], fftEngine.io.writeEnableSram1Bank[1]) @[FFTTop.scala 45:42]
+    fftSram1_1.io.writeEnable <= _fftSram1_1_io_writeEnable_T @[FFTTop.scala 45:36]
+    node _fftSram0_1_io_addr_T = mux(io.externalMode, io.addrSram0Bank[1], fftEngine.io.addrSram0Bank[1]) @[FFTTop.scala 46:35]
+    fftSram0_1.io.addr <= _fftSram0_1_io_addr_T @[FFTTop.scala 46:29]
+    node _fftSram1_1_io_addr_T = mux(io.externalMode, io.addrSram1Bank[1], fftEngine.io.addrSram1Bank[1]) @[FFTTop.scala 47:35]
+    fftSram1_1.io.addr <= _fftSram1_1_io_addr_T @[FFTTop.scala 47:29]
+    fftEngine.io.readDataSram0Bank[2] <= fftSram0_2.io.dataOut @[FFTTop.scala 35:43]
+    fftEngine.io.readDataSram1Bank[2] <= fftSram1_2.io.dataOut @[FFTTop.scala 36:43]
+    io.readDataSram0Bank[2] <= fftSram0_2.io.dataOut @[FFTTop.scala 37:33]
+    io.readDataSram1Bank[2] <= fftSram1_2.io.dataOut @[FFTTop.scala 38:33]
+    node _fftSram0_2_io_readEnable_T = mux(io.externalMode, io.readEnableSram0Bank[2], fftEngine.io.readEnableSram0Bank[2]) @[FFTTop.scala 40:41]
+    fftSram0_2.io.readEnable <= _fftSram0_2_io_readEnable_T @[FFTTop.scala 40:35]
+    node _fftSram1_2_io_readEnable_T = mux(io.externalMode, io.readEnableSram1Bank[2], fftEngine.io.readEnableSram1Bank[2]) @[FFTTop.scala 41:41]
+    fftSram1_2.io.readEnable <= _fftSram1_2_io_readEnable_T @[FFTTop.scala 41:35]
+    node _fftSram0_2_io_dataIn_T = mux(io.externalMode, io.writeDataSram0Bank[2], fftEngine.io.writeDataSram0Bank[2]) @[FFTTop.scala 42:37]
+    fftSram0_2.io.dataIn <= _fftSram0_2_io_dataIn_T @[FFTTop.scala 42:31]
+    node _fftSram1_2_io_dataIn_T = mux(io.externalMode, io.writeDataSram1Bank[2], fftEngine.io.writeDataSram1Bank[2]) @[FFTTop.scala 43:37]
+    fftSram1_2.io.dataIn <= _fftSram1_2_io_dataIn_T @[FFTTop.scala 43:31]
+    node _fftSram0_2_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram0Bank[2], fftEngine.io.writeEnableSram0Bank[2]) @[FFTTop.scala 44:42]
+    fftSram0_2.io.writeEnable <= _fftSram0_2_io_writeEnable_T @[FFTTop.scala 44:36]
+    node _fftSram1_2_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram1Bank[2], fftEngine.io.writeEnableSram1Bank[2]) @[FFTTop.scala 45:42]
+    fftSram1_2.io.writeEnable <= _fftSram1_2_io_writeEnable_T @[FFTTop.scala 45:36]
+    node _fftSram0_2_io_addr_T = mux(io.externalMode, io.addrSram0Bank[2], fftEngine.io.addrSram0Bank[2]) @[FFTTop.scala 46:35]
+    fftSram0_2.io.addr <= _fftSram0_2_io_addr_T @[FFTTop.scala 46:29]
+    node _fftSram1_2_io_addr_T = mux(io.externalMode, io.addrSram1Bank[2], fftEngine.io.addrSram1Bank[2]) @[FFTTop.scala 47:35]
+    fftSram1_2.io.addr <= _fftSram1_2_io_addr_T @[FFTTop.scala 47:29]
+    fftEngine.io.readDataSram0Bank[3] <= fftSram0_3.io.dataOut @[FFTTop.scala 35:43]
+    fftEngine.io.readDataSram1Bank[3] <= fftSram1_3.io.dataOut @[FFTTop.scala 36:43]
+    io.readDataSram0Bank[3] <= fftSram0_3.io.dataOut @[FFTTop.scala 37:33]
+    io.readDataSram1Bank[3] <= fftSram1_3.io.dataOut @[FFTTop.scala 38:33]
+    node _fftSram0_3_io_readEnable_T = mux(io.externalMode, io.readEnableSram0Bank[3], fftEngine.io.readEnableSram0Bank[3]) @[FFTTop.scala 40:41]
+    fftSram0_3.io.readEnable <= _fftSram0_3_io_readEnable_T @[FFTTop.scala 40:35]
+    node _fftSram1_3_io_readEnable_T = mux(io.externalMode, io.readEnableSram1Bank[3], fftEngine.io.readEnableSram1Bank[3]) @[FFTTop.scala 41:41]
+    fftSram1_3.io.readEnable <= _fftSram1_3_io_readEnable_T @[FFTTop.scala 41:35]
+    node _fftSram0_3_io_dataIn_T = mux(io.externalMode, io.writeDataSram0Bank[3], fftEngine.io.writeDataSram0Bank[3]) @[FFTTop.scala 42:37]
+    fftSram0_3.io.dataIn <= _fftSram0_3_io_dataIn_T @[FFTTop.scala 42:31]
+    node _fftSram1_3_io_dataIn_T = mux(io.externalMode, io.writeDataSram1Bank[3], fftEngine.io.writeDataSram1Bank[3]) @[FFTTop.scala 43:37]
+    fftSram1_3.io.dataIn <= _fftSram1_3_io_dataIn_T @[FFTTop.scala 43:31]
+    node _fftSram0_3_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram0Bank[3], fftEngine.io.writeEnableSram0Bank[3]) @[FFTTop.scala 44:42]
+    fftSram0_3.io.writeEnable <= _fftSram0_3_io_writeEnable_T @[FFTTop.scala 44:36]
+    node _fftSram1_3_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram1Bank[3], fftEngine.io.writeEnableSram1Bank[3]) @[FFTTop.scala 45:42]
+    fftSram1_3.io.writeEnable <= _fftSram1_3_io_writeEnable_T @[FFTTop.scala 45:36]
+    node _fftSram0_3_io_addr_T = mux(io.externalMode, io.addrSram0Bank[3], fftEngine.io.addrSram0Bank[3]) @[FFTTop.scala 46:35]
+    fftSram0_3.io.addr <= _fftSram0_3_io_addr_T @[FFTTop.scala 46:29]
+    node _fftSram1_3_io_addr_T = mux(io.externalMode, io.addrSram1Bank[3], fftEngine.io.addrSram1Bank[3]) @[FFTTop.scala 47:35]
+    fftSram1_3.io.addr <= _fftSram1_3_io_addr_T @[FFTTop.scala 47:29]
+    fftEngine.io.readDataSram0Bank[4] <= fftSram0_4.io.dataOut @[FFTTop.scala 35:43]
+    fftEngine.io.readDataSram1Bank[4] <= fftSram1_4.io.dataOut @[FFTTop.scala 36:43]
+    io.readDataSram0Bank[4] <= fftSram0_4.io.dataOut @[FFTTop.scala 37:33]
+    io.readDataSram1Bank[4] <= fftSram1_4.io.dataOut @[FFTTop.scala 38:33]
+    node _fftSram0_4_io_readEnable_T = mux(io.externalMode, io.readEnableSram0Bank[4], fftEngine.io.readEnableSram0Bank[4]) @[FFTTop.scala 40:41]
+    fftSram0_4.io.readEnable <= _fftSram0_4_io_readEnable_T @[FFTTop.scala 40:35]
+    node _fftSram1_4_io_readEnable_T = mux(io.externalMode, io.readEnableSram1Bank[4], fftEngine.io.readEnableSram1Bank[4]) @[FFTTop.scala 41:41]
+    fftSram1_4.io.readEnable <= _fftSram1_4_io_readEnable_T @[FFTTop.scala 41:35]
+    node _fftSram0_4_io_dataIn_T = mux(io.externalMode, io.writeDataSram0Bank[4], fftEngine.io.writeDataSram0Bank[4]) @[FFTTop.scala 42:37]
+    fftSram0_4.io.dataIn <= _fftSram0_4_io_dataIn_T @[FFTTop.scala 42:31]
+    node _fftSram1_4_io_dataIn_T = mux(io.externalMode, io.writeDataSram1Bank[4], fftEngine.io.writeDataSram1Bank[4]) @[FFTTop.scala 43:37]
+    fftSram1_4.io.dataIn <= _fftSram1_4_io_dataIn_T @[FFTTop.scala 43:31]
+    node _fftSram0_4_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram0Bank[4], fftEngine.io.writeEnableSram0Bank[4]) @[FFTTop.scala 44:42]
+    fftSram0_4.io.writeEnable <= _fftSram0_4_io_writeEnable_T @[FFTTop.scala 44:36]
+    node _fftSram1_4_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram1Bank[4], fftEngine.io.writeEnableSram1Bank[4]) @[FFTTop.scala 45:42]
+    fftSram1_4.io.writeEnable <= _fftSram1_4_io_writeEnable_T @[FFTTop.scala 45:36]
+    node _fftSram0_4_io_addr_T = mux(io.externalMode, io.addrSram0Bank[4], fftEngine.io.addrSram0Bank[4]) @[FFTTop.scala 46:35]
+    fftSram0_4.io.addr <= _fftSram0_4_io_addr_T @[FFTTop.scala 46:29]
+    node _fftSram1_4_io_addr_T = mux(io.externalMode, io.addrSram1Bank[4], fftEngine.io.addrSram1Bank[4]) @[FFTTop.scala 47:35]
+    fftSram1_4.io.addr <= _fftSram1_4_io_addr_T @[FFTTop.scala 47:29]
+    fftEngine.io.readDataSram0Bank[5] <= fftSram0_5.io.dataOut @[FFTTop.scala 35:43]
+    fftEngine.io.readDataSram1Bank[5] <= fftSram1_5.io.dataOut @[FFTTop.scala 36:43]
+    io.readDataSram0Bank[5] <= fftSram0_5.io.dataOut @[FFTTop.scala 37:33]
+    io.readDataSram1Bank[5] <= fftSram1_5.io.dataOut @[FFTTop.scala 38:33]
+    node _fftSram0_5_io_readEnable_T = mux(io.externalMode, io.readEnableSram0Bank[5], fftEngine.io.readEnableSram0Bank[5]) @[FFTTop.scala 40:41]
+    fftSram0_5.io.readEnable <= _fftSram0_5_io_readEnable_T @[FFTTop.scala 40:35]
+    node _fftSram1_5_io_readEnable_T = mux(io.externalMode, io.readEnableSram1Bank[5], fftEngine.io.readEnableSram1Bank[5]) @[FFTTop.scala 41:41]
+    fftSram1_5.io.readEnable <= _fftSram1_5_io_readEnable_T @[FFTTop.scala 41:35]
+    node _fftSram0_5_io_dataIn_T = mux(io.externalMode, io.writeDataSram0Bank[5], fftEngine.io.writeDataSram0Bank[5]) @[FFTTop.scala 42:37]
+    fftSram0_5.io.dataIn <= _fftSram0_5_io_dataIn_T @[FFTTop.scala 42:31]
+    node _fftSram1_5_io_dataIn_T = mux(io.externalMode, io.writeDataSram1Bank[5], fftEngine.io.writeDataSram1Bank[5]) @[FFTTop.scala 43:37]
+    fftSram1_5.io.dataIn <= _fftSram1_5_io_dataIn_T @[FFTTop.scala 43:31]
+    node _fftSram0_5_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram0Bank[5], fftEngine.io.writeEnableSram0Bank[5]) @[FFTTop.scala 44:42]
+    fftSram0_5.io.writeEnable <= _fftSram0_5_io_writeEnable_T @[FFTTop.scala 44:36]
+    node _fftSram1_5_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram1Bank[5], fftEngine.io.writeEnableSram1Bank[5]) @[FFTTop.scala 45:42]
+    fftSram1_5.io.writeEnable <= _fftSram1_5_io_writeEnable_T @[FFTTop.scala 45:36]
+    node _fftSram0_5_io_addr_T = mux(io.externalMode, io.addrSram0Bank[5], fftEngine.io.addrSram0Bank[5]) @[FFTTop.scala 46:35]
+    fftSram0_5.io.addr <= _fftSram0_5_io_addr_T @[FFTTop.scala 46:29]
+    node _fftSram1_5_io_addr_T = mux(io.externalMode, io.addrSram1Bank[5], fftEngine.io.addrSram1Bank[5]) @[FFTTop.scala 47:35]
+    fftSram1_5.io.addr <= _fftSram1_5_io_addr_T @[FFTTop.scala 47:29]
+    fftEngine.io.readDataSram0Bank[6] <= fftSram0_6.io.dataOut @[FFTTop.scala 35:43]
+    fftEngine.io.readDataSram1Bank[6] <= fftSram1_6.io.dataOut @[FFTTop.scala 36:43]
+    io.readDataSram0Bank[6] <= fftSram0_6.io.dataOut @[FFTTop.scala 37:33]
+    io.readDataSram1Bank[6] <= fftSram1_6.io.dataOut @[FFTTop.scala 38:33]
+    node _fftSram0_6_io_readEnable_T = mux(io.externalMode, io.readEnableSram0Bank[6], fftEngine.io.readEnableSram0Bank[6]) @[FFTTop.scala 40:41]
+    fftSram0_6.io.readEnable <= _fftSram0_6_io_readEnable_T @[FFTTop.scala 40:35]
+    node _fftSram1_6_io_readEnable_T = mux(io.externalMode, io.readEnableSram1Bank[6], fftEngine.io.readEnableSram1Bank[6]) @[FFTTop.scala 41:41]
+    fftSram1_6.io.readEnable <= _fftSram1_6_io_readEnable_T @[FFTTop.scala 41:35]
+    node _fftSram0_6_io_dataIn_T = mux(io.externalMode, io.writeDataSram0Bank[6], fftEngine.io.writeDataSram0Bank[6]) @[FFTTop.scala 42:37]
+    fftSram0_6.io.dataIn <= _fftSram0_6_io_dataIn_T @[FFTTop.scala 42:31]
+    node _fftSram1_6_io_dataIn_T = mux(io.externalMode, io.writeDataSram1Bank[6], fftEngine.io.writeDataSram1Bank[6]) @[FFTTop.scala 43:37]
+    fftSram1_6.io.dataIn <= _fftSram1_6_io_dataIn_T @[FFTTop.scala 43:31]
+    node _fftSram0_6_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram0Bank[6], fftEngine.io.writeEnableSram0Bank[6]) @[FFTTop.scala 44:42]
+    fftSram0_6.io.writeEnable <= _fftSram0_6_io_writeEnable_T @[FFTTop.scala 44:36]
+    node _fftSram1_6_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram1Bank[6], fftEngine.io.writeEnableSram1Bank[6]) @[FFTTop.scala 45:42]
+    fftSram1_6.io.writeEnable <= _fftSram1_6_io_writeEnable_T @[FFTTop.scala 45:36]
+    node _fftSram0_6_io_addr_T = mux(io.externalMode, io.addrSram0Bank[6], fftEngine.io.addrSram0Bank[6]) @[FFTTop.scala 46:35]
+    fftSram0_6.io.addr <= _fftSram0_6_io_addr_T @[FFTTop.scala 46:29]
+    node _fftSram1_6_io_addr_T = mux(io.externalMode, io.addrSram1Bank[6], fftEngine.io.addrSram1Bank[6]) @[FFTTop.scala 47:35]
+    fftSram1_6.io.addr <= _fftSram1_6_io_addr_T @[FFTTop.scala 47:29]
+    fftEngine.io.readDataSram0Bank[7] <= fftSram0_7.io.dataOut @[FFTTop.scala 35:43]
+    fftEngine.io.readDataSram1Bank[7] <= fftSram1_7.io.dataOut @[FFTTop.scala 36:43]
+    io.readDataSram0Bank[7] <= fftSram0_7.io.dataOut @[FFTTop.scala 37:33]
+    io.readDataSram1Bank[7] <= fftSram1_7.io.dataOut @[FFTTop.scala 38:33]
+    node _fftSram0_7_io_readEnable_T = mux(io.externalMode, io.readEnableSram0Bank[7], fftEngine.io.readEnableSram0Bank[7]) @[FFTTop.scala 40:41]
+    fftSram0_7.io.readEnable <= _fftSram0_7_io_readEnable_T @[FFTTop.scala 40:35]
+    node _fftSram1_7_io_readEnable_T = mux(io.externalMode, io.readEnableSram1Bank[7], fftEngine.io.readEnableSram1Bank[7]) @[FFTTop.scala 41:41]
+    fftSram1_7.io.readEnable <= _fftSram1_7_io_readEnable_T @[FFTTop.scala 41:35]
+    node _fftSram0_7_io_dataIn_T = mux(io.externalMode, io.writeDataSram0Bank[7], fftEngine.io.writeDataSram0Bank[7]) @[FFTTop.scala 42:37]
+    fftSram0_7.io.dataIn <= _fftSram0_7_io_dataIn_T @[FFTTop.scala 42:31]
+    node _fftSram1_7_io_dataIn_T = mux(io.externalMode, io.writeDataSram1Bank[7], fftEngine.io.writeDataSram1Bank[7]) @[FFTTop.scala 43:37]
+    fftSram1_7.io.dataIn <= _fftSram1_7_io_dataIn_T @[FFTTop.scala 43:31]
+    node _fftSram0_7_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram0Bank[7], fftEngine.io.writeEnableSram0Bank[7]) @[FFTTop.scala 44:42]
+    fftSram0_7.io.writeEnable <= _fftSram0_7_io_writeEnable_T @[FFTTop.scala 44:36]
+    node _fftSram1_7_io_writeEnable_T = mux(io.externalMode, io.writeEnableSram1Bank[7], fftEngine.io.writeEnableSram1Bank[7]) @[FFTTop.scala 45:42]
+    fftSram1_7.io.writeEnable <= _fftSram1_7_io_writeEnable_T @[FFTTop.scala 45:36]
+    node _fftSram0_7_io_addr_T = mux(io.externalMode, io.addrSram0Bank[7], fftEngine.io.addrSram0Bank[7]) @[FFTTop.scala 46:35]
+    fftSram0_7.io.addr <= _fftSram0_7_io_addr_T @[FFTTop.scala 46:29]
+    node _fftSram1_7_io_addr_T = mux(io.externalMode, io.addrSram1Bank[7], fftEngine.io.addrSram1Bank[7]) @[FFTTop.scala 47:35]
+    fftSram1_7.io.addr <= _fftSram1_7_io_addr_T @[FFTTop.scala 47:29]
+    io.fftDone <= fftEngine.io.fftDone @[FFTTop.scala 49:16]
+    fftEngine.io.fftEngineKick <= io.fftEngineKick @[FFTTop.scala 50:32]
+    fftEngine.io.fftMode <= io.fftMode @[FFTTop.scala 51:26]
+    fftEngine.io.fftRShiftP0[0] <= io.fftRShiftP0[0] @[FFTTop.scala 52:30]
+    fftEngine.io.fftRShiftP0[1] <= io.fftRShiftP0[1] @[FFTTop.scala 52:30]
+    fftEngine.io.fftRShiftP0[2] <= io.fftRShiftP0[2] @[FFTTop.scala 52:30]
+    fftEngine.io.fftRShiftP0[3] <= io.fftRShiftP0[3] @[FFTTop.scala 52:30]
 

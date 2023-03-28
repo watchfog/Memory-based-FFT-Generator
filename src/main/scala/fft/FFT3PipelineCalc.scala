@@ -42,7 +42,7 @@ class FFT3PipelineCalc extends Module with DataConfig{
 
     val twiLutCaseIdx1c = Mux(io.isFFT, 0.U(2.W), 1.U(2.W))
 
-    val fftTwiddle = Module(new FFTTwiddle)
+    val fftTwiddle = Module(new FFTTwiddle(0))
     fftTwiddle.io.nk := twiLutIdx1c
     fftTwiddle.io.twiLutCaseIndex := twiLutCaseIdx1c
     val wR1c = fftTwiddle.io.wR

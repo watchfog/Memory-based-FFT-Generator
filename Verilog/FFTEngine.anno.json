@@ -1,5 +1,95 @@
 [
   {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTMultiply",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/multiplyUnits_0:FFTMultiply",
+    "index":0.0
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTMultiply_1",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/multiplyUnits_1:FFTMultiply",
+    "index":0.058823529411764705
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTMultiply_2",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/multiplyUnits_2:FFTMultiply",
+    "index":0.11764705882352941
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTMultiply_3",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/multiplyUnits_3:FFTMultiply",
+    "index":0.17647058823529413
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTMultiply_4",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/multiplyUnits_4:FFTMultiply",
+    "index":0.23529411764705882
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTMultiply_5",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/multiplyUnits_5:FFTMultiply",
+    "index":0.29411764705882354
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTMultiply_6",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/multiplyUnits_6:FFTMultiply",
+    "index":0.35294117647058826
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTMultiply_7",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/multiplyUnits_7:FFTMultiply_7",
+    "index":0.4117647058823529
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTMultiply_8",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/multiplyUnits_8:FFTMultiply_7",
+    "index":0.47058823529411764
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTTwiddle_1",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_1:FFTTwiddle_1",
+    "index":0.5882352941176471
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTTwiddle_2",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_2:FFTTwiddle_1",
+    "index":0.6470588235294118
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTTwiddle_3",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_3:FFTTwiddle_1",
+    "index":0.7058823529411765
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTTwiddle_4",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_4:FFTTwiddle_1",
+    "index":0.7647058823529411
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTTwiddle_5",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_5:FFTTwiddle_1",
+    "index":0.8235294117647058
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTEngine|FFTTwiddle_6",
+    "duplicate":"~FFTEngine|FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_6:FFTTwiddle_1",
+    "index":0.8823529411764706
+  },
+  {
     "class":"firrtl.EmitCircuitAnnotation",
     "emitter":"firrtl.VerilogEmitter"
   },
@@ -9,7 +99,49 @@
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTEngine|FFTEngine>io_writeDataSram1Bank_1_im",
+    "sink":"~FFTEngine|FFTEngine>io_addrSram0Bank_3",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_addrSram1Bank_6",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_addrSram1Bank_5",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_addrSram1Bank_3",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram1Bank_1",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_addrSram0Bank_5",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram0Bank_3",
     "sources":[
       "~FFTEngine|FFTEngine>io_fftMode"
     ]
@@ -23,28 +155,77 @@
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTEngine|FFTEngine>io_writeDataSram1Bank_0_im",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram0Bank_2",
     "sources":[
       "~FFTEngine|FFTEngine>io_fftMode"
     ]
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTEngine|FFTEngine>io_writeDataSram0Bank_1_im",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram1Bank_4",
     "sources":[
       "~FFTEngine|FFTEngine>io_fftMode"
     ]
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTEngine|FFTEngine>io_writeDataSram0Bank_0_im",
+    "sink":"~FFTEngine|FFTEngine>io_addrSram1Bank_4",
     "sources":[
       "~FFTEngine|FFTEngine>io_fftMode"
     ]
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTEngine|FFTEngine>io_writeDataSram0Bank_1_re",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram0Bank_4",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_addrSram0Bank_7",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram0Bank_7",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_addrSram1Bank_2",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram1Bank_7",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_addrSram0Bank_2",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram1Bank_5",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram0Bank_0",
     "sources":[
       "~FFTEngine|FFTEngine>io_fftMode"
     ]
@@ -65,21 +246,70 @@
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTEngine|FFTEngine>io_writeDataSram1Bank_0_re",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram1Bank_3",
     "sources":[
       "~FFTEngine|FFTEngine>io_fftMode"
     ]
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTEngine|FFTEngine>io_writeDataSram1Bank_1_re",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram1Bank_2",
     "sources":[
       "~FFTEngine|FFTEngine>io_fftMode"
     ]
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTEngine|FFTEngine>io_writeDataSram0Bank_0_re",
+    "sink":"~FFTEngine|FFTEngine>io_addrSram1Bank_7",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram0Bank_1",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_addrSram0Bank_6",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_addrSram0Bank_4",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram1Bank_0",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram1Bank_6",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram0Bank_5",
+    "sources":[
+      "~FFTEngine|FFTEngine>io_fftMode"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTEngine|FFTEngine>io_writeDataSram0Bank_6",
     "sources":[
       "~FFTEngine|FFTEngine>io_fftMode"
     ]

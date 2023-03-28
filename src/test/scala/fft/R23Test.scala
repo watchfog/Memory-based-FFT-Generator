@@ -10,7 +10,7 @@ import chiseltest.simulator.VerilatorBackendAnnotation
 import chisel3.experimental.FixedPoint
 
 class FFTR23Test extends AnyFreeSpec with ChiselScalatestTester with DataConfig {
-    val OutputDataFlow = true
+    val OutputDataFlow = false
 
     def complexUInt2Complex(dataIn : UInt) : Complex = {
         var dataIPre = dataIn((fftDataWidth + 2) * 2 - 1, fftDataWidth + 2).litValue.toInt
@@ -94,8 +94,8 @@ class FFTR23Test extends AnyFreeSpec with ChiselScalatestTester with DataConfig 
             }
             dut.io.fftEngineKick.poke(false.B)
 
-            // dut.io.fftRShiftP0(1).poke(true.B)
-            // dut.io.fftRShiftP0(3).poke(true.B)
+            dut.io.fftRShiftP0(1).poke(true.B)
+            dut.io.fftRShiftP0(3).poke(true.B)
             dut.clock.step()
 
             //kick
@@ -126,11 +126,11 @@ class FFTR23Test extends AnyFreeSpec with ChiselScalatestTester with DataConfig 
                 val n2 = 2 * n + 1
                 val t1: Double = n1 * 2.0 * Pi / fftLength.toDouble
                 val t2: Double = n2 * 2.0 * Pi / fftLength.toDouble
-                var temp1 = (1 * sin(2 * t1) + 1 * cos(2 * t1) + 1 * sin(4 * t1) + 1 * cos(4 * t1) + 2) * pow(2, 3)
-                var temp2 = (1 * sin(2 * t2) + 1 * cos(2 * t2) + 1 * sin(4 * t2) + 1 * cos(4 * t2) + 2) * pow(2, 3)
+                var temp1 = (1 * sin(2 * t1) + 1 * cos(2 * t1) + 1 * sin(4 * t1) + 1 * cos(4 * t1) + 2) * pow(2, 6) * 1.1
+                var temp2 = (1 * sin(2 * t2) + 1 * cos(2 * t2) + 1 * sin(4 * t2) + 1 * cos(4 * t2) + 2) * pow(2, 6) * 1.1
                 var tempU = (1 * round(temp2.abs) * pow(2, fftDataWidth + 2) + 1 * round(temp1.abs)).toLong.asUInt
-                fftRefIn(2 * n) = new Complex(round(temp1.abs).toDouble, 0)
-                fftRefIn(2 * n + 1) = new Complex(round(temp2.abs).toDouble, 0)
+                fftRefIn(2 * n) = new Complex(temp1.abs, 0)
+                fftRefIn(2 * n + 1) = new Complex(temp2.abs, 0)
                 tempU
             }
 
@@ -567,6 +567,10 @@ class FFTR23Test extends AnyFreeSpec with ChiselScalatestTester with DataConfig 
 
             var fftDiffAbsSum = 0.0
             var fftCmSum = 0.0
+
+            
+            var fftDiffSquareSum = 0.0
+            var fftRefSquareSum = 0.0
             //output data
             for(radix <- 1 until fftLength) {
                 var radixUInt = radix.U
@@ -598,19 +602,28 @@ class FFTR23Test extends AnyFreeSpec with ChiselScalatestTester with DataConfig 
                     sramData = sram1bank(bankSel)(bankAddr)
                 }
 
-                var fftOut = complexUInt2Complex(sramData)
-                var fftDiffAbsR = (fftOut.re - fftRefOut(radix).re).abs
-                var fftDiffAbsI = (fftOut.im - fftRefOut(radix).im).abs
-                var fftCmR = fftOut.re.abs + fftRefOut(radix).re.abs
-                var fftCmI = fftOut.im.abs + fftRefOut(radix).im.abs
-                fftDiffAbsSum = fftDiffAbsSum + fftDiffAbsR + fftDiffAbsI
-                fftCmSum = fftCmSum + fftCmR + fftCmI 
+                var fftOut = complexUInt2Complex(sramData) * new Complex(4, 0)
+                // var fftDiffAbsR = (fftOut.re - fftRefOut(radix).re).abs
+                // var fftDiffAbsI = (fftOut.im - fftRefOut(radix).im).abs
+                // var fftCmR = fftOut.re.abs + fftRefOut(radix).re.abs
+                // var fftCmI = fftOut.im.abs + fftRefOut(radix).im.abs
+                // fftDiffAbsSum = fftDiffAbsSum + fftDiffAbsR + fftDiffAbsI
+                // fftCmSum = fftCmSum + fftCmR + fftCmI 
 
-                println(s"$radix: " + complexUInt2Complex(sramData))
-                println(s"Ref: "  + new Complex(fftRefOut(radix).re, fftRefOut(radix).im))
+                // println(s"$radix: " + fftOut)
+                // println(s"Ref: "  + new Complex(fftRefOut(radix).re, fftRefOut(radix).im))
+
+                var fftDiff = fftOut - fftRefOut(radix)
+                fftDiffSquareSum = fftDiff.re * fftDiff.re + fftDiff.im * fftDiff.im + fftDiffSquareSum
+                fftRefSquareSum = fftRefOut(radix).re * fftRefOut(radix).re + fftRefOut(radix).im * fftRefOut(radix).im + fftRefSquareSum
+
+                println(s"$radix: " + fftOut)
+                println(s"Ref: "  + fftRefOut(radix))
             }
-            var smape = fftDiffAbsSum / fftCmSum * 100
-            println("SMAPE: " + smape + "%")
+            var sqnr = 10 * log10(fftRefSquareSum / fftDiffSquareSum)
+            println(s"SQNR: $sqnr dB")
+            // var smape = fftDiffAbsSum / fftCmSum * 100
+            // println("SMAPE: " + smape + "%")
         }
     }
 }

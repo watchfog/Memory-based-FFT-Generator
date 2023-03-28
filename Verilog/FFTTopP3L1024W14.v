@@ -5702,3 +5702,716 @@ end // initial
 `endif
 `endif // SYNTHESIS
 endmodule
+module FFTSram(
+  input         clock,
+  input         io_readEnable,
+  input         io_writeEnable,
+  input  [6:0]  io_addr,
+  input  [31:0] io_dataIn,
+  output [31:0] io_dataOut
+);
+`ifdef RANDOMIZE_MEM_INIT
+  reg [31:0] _RAND_0;
+`endif // RANDOMIZE_MEM_INIT
+`ifdef RANDOMIZE_REG_INIT
+  reg [31:0] _RAND_1;
+  reg [31:0] _RAND_2;
+`endif // RANDOMIZE_REG_INIT
+  reg [31:0] mem [0:127]; // @[FFTSram.scala 16:24]
+  wire  mem_rdwrPort_r_en; // @[FFTSram.scala 16:24]
+  wire [6:0] mem_rdwrPort_r_addr; // @[FFTSram.scala 16:24]
+  wire [31:0] mem_rdwrPort_r_data; // @[FFTSram.scala 16:24]
+  wire [31:0] mem_rdwrPort_w_data; // @[FFTSram.scala 16:24]
+  wire [6:0] mem_rdwrPort_w_addr; // @[FFTSram.scala 16:24]
+  wire  mem_rdwrPort_w_mask; // @[FFTSram.scala 16:24]
+  wire  mem_rdwrPort_w_en; // @[FFTSram.scala 16:24]
+  reg  mem_rdwrPort_r_en_pipe_0;
+  reg [6:0] mem_rdwrPort_r_addr_pipe_0;
+  assign mem_rdwrPort_r_en = mem_rdwrPort_r_en_pipe_0;
+  assign mem_rdwrPort_r_addr = mem_rdwrPort_r_addr_pipe_0;
+  assign mem_rdwrPort_r_data = mem[mem_rdwrPort_r_addr]; // @[FFTSram.scala 16:24]
+  assign mem_rdwrPort_w_data = io_dataIn;
+  assign mem_rdwrPort_w_addr = io_addr;
+  assign mem_rdwrPort_w_mask = io_writeEnable;
+  assign mem_rdwrPort_w_en = io_readEnable & (io_readEnable & io_writeEnable);
+  assign io_dataOut = mem_rdwrPort_r_data; // @[FFTSram.scala 20:27 21:34]
+  always @(posedge clock) begin
+    if (mem_rdwrPort_w_en & mem_rdwrPort_w_mask) begin
+      mem[mem_rdwrPort_w_addr] <= mem_rdwrPort_w_data; // @[FFTSram.scala 16:24]
+    end
+    mem_rdwrPort_r_en_pipe_0 <= io_readEnable & ~(io_readEnable & io_writeEnable);
+    if (io_readEnable & ~(io_readEnable & io_writeEnable)) begin
+      mem_rdwrPort_r_addr_pipe_0 <= io_addr;
+    end
+  end
+// Register and memory initialization
+`ifdef RANDOMIZE_GARBAGE_ASSIGN
+`define RANDOMIZE
+`endif
+`ifdef RANDOMIZE_INVALID_ASSIGN
+`define RANDOMIZE
+`endif
+`ifdef RANDOMIZE_REG_INIT
+`define RANDOMIZE
+`endif
+`ifdef RANDOMIZE_MEM_INIT
+`define RANDOMIZE
+`endif
+`ifndef RANDOM
+`define RANDOM $random
+`endif
+`ifdef RANDOMIZE_MEM_INIT
+  integer initvar;
+`endif
+`ifndef SYNTHESIS
+`ifdef FIRRTL_BEFORE_INITIAL
+`FIRRTL_BEFORE_INITIAL
+`endif
+initial begin
+  `ifdef RANDOMIZE
+    `ifdef INIT_RANDOM
+      `INIT_RANDOM
+    `endif
+    `ifndef VERILATOR
+      `ifdef RANDOMIZE_DELAY
+        #`RANDOMIZE_DELAY begin end
+      `else
+        #0.002 begin end
+      `endif
+    `endif
+`ifdef RANDOMIZE_MEM_INIT
+  _RAND_0 = {1{`RANDOM}};
+  for (initvar = 0; initvar < 128; initvar = initvar+1)
+    mem[initvar] = _RAND_0[31:0];
+`endif // RANDOMIZE_MEM_INIT
+`ifdef RANDOMIZE_REG_INIT
+  _RAND_1 = {1{`RANDOM}};
+  mem_rdwrPort_r_en_pipe_0 = _RAND_1[0:0];
+  _RAND_2 = {1{`RANDOM}};
+  mem_rdwrPort_r_addr_pipe_0 = _RAND_2[6:0];
+`endif // RANDOMIZE_REG_INIT
+  `endif // RANDOMIZE
+end // initial
+`ifdef FIRRTL_AFTER_INITIAL
+`FIRRTL_AFTER_INITIAL
+`endif
+`endif // SYNTHESIS
+endmodule
+module FFTTop(
+  input         clock,
+  input         reset,
+  output        io_fftDone,
+  input         io_fftEngineKick,
+  input         io_fftMode,
+  input         io_fftRShiftP0_0,
+  input         io_fftRShiftP0_1,
+  input         io_fftRShiftP0_2,
+  input         io_fftRShiftP0_3,
+  input         io_externalMode,
+  output [31:0] io_readDataSram0Bank_0,
+  output [31:0] io_readDataSram0Bank_1,
+  output [31:0] io_readDataSram0Bank_2,
+  output [31:0] io_readDataSram0Bank_3,
+  output [31:0] io_readDataSram0Bank_4,
+  output [31:0] io_readDataSram0Bank_5,
+  output [31:0] io_readDataSram0Bank_6,
+  output [31:0] io_readDataSram0Bank_7,
+  output [31:0] io_readDataSram1Bank_0,
+  output [31:0] io_readDataSram1Bank_1,
+  output [31:0] io_readDataSram1Bank_2,
+  output [31:0] io_readDataSram1Bank_3,
+  output [31:0] io_readDataSram1Bank_4,
+  output [31:0] io_readDataSram1Bank_5,
+  output [31:0] io_readDataSram1Bank_6,
+  output [31:0] io_readDataSram1Bank_7,
+  input         io_readEnableSram0Bank_0,
+  input         io_readEnableSram0Bank_1,
+  input         io_readEnableSram0Bank_2,
+  input         io_readEnableSram0Bank_3,
+  input         io_readEnableSram0Bank_4,
+  input         io_readEnableSram0Bank_5,
+  input         io_readEnableSram0Bank_6,
+  input         io_readEnableSram0Bank_7,
+  input         io_readEnableSram1Bank_0,
+  input         io_readEnableSram1Bank_1,
+  input         io_readEnableSram1Bank_2,
+  input         io_readEnableSram1Bank_3,
+  input         io_readEnableSram1Bank_4,
+  input         io_readEnableSram1Bank_5,
+  input         io_readEnableSram1Bank_6,
+  input         io_readEnableSram1Bank_7,
+  input  [31:0] io_writeDataSram0Bank_0,
+  input  [31:0] io_writeDataSram0Bank_1,
+  input  [31:0] io_writeDataSram0Bank_2,
+  input  [31:0] io_writeDataSram0Bank_3,
+  input  [31:0] io_writeDataSram0Bank_4,
+  input  [31:0] io_writeDataSram0Bank_5,
+  input  [31:0] io_writeDataSram0Bank_6,
+  input  [31:0] io_writeDataSram0Bank_7,
+  input  [31:0] io_writeDataSram1Bank_0,
+  input  [31:0] io_writeDataSram1Bank_1,
+  input  [31:0] io_writeDataSram1Bank_2,
+  input  [31:0] io_writeDataSram1Bank_3,
+  input  [31:0] io_writeDataSram1Bank_4,
+  input  [31:0] io_writeDataSram1Bank_5,
+  input  [31:0] io_writeDataSram1Bank_6,
+  input  [31:0] io_writeDataSram1Bank_7,
+  input         io_writeEnableSram0Bank_0,
+  input         io_writeEnableSram0Bank_1,
+  input         io_writeEnableSram0Bank_2,
+  input         io_writeEnableSram0Bank_3,
+  input         io_writeEnableSram0Bank_4,
+  input         io_writeEnableSram0Bank_5,
+  input         io_writeEnableSram0Bank_6,
+  input         io_writeEnableSram0Bank_7,
+  input         io_writeEnableSram1Bank_0,
+  input         io_writeEnableSram1Bank_1,
+  input         io_writeEnableSram1Bank_2,
+  input         io_writeEnableSram1Bank_3,
+  input         io_writeEnableSram1Bank_4,
+  input         io_writeEnableSram1Bank_5,
+  input         io_writeEnableSram1Bank_6,
+  input         io_writeEnableSram1Bank_7,
+  input  [6:0]  io_addrSram0Bank_0,
+  input  [6:0]  io_addrSram0Bank_1,
+  input  [6:0]  io_addrSram0Bank_2,
+  input  [6:0]  io_addrSram0Bank_3,
+  input  [6:0]  io_addrSram0Bank_4,
+  input  [6:0]  io_addrSram0Bank_5,
+  input  [6:0]  io_addrSram0Bank_6,
+  input  [6:0]  io_addrSram0Bank_7,
+  input  [6:0]  io_addrSram1Bank_0,
+  input  [6:0]  io_addrSram1Bank_1,
+  input  [6:0]  io_addrSram1Bank_2,
+  input  [6:0]  io_addrSram1Bank_3,
+  input  [6:0]  io_addrSram1Bank_4,
+  input  [6:0]  io_addrSram1Bank_5,
+  input  [6:0]  io_addrSram1Bank_6,
+  input  [6:0]  io_addrSram1Bank_7
+);
+  wire  fftEngine_clock; // @[FFTTop.scala 31:27]
+  wire  fftEngine_reset; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram0Bank_0; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram0Bank_1; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram0Bank_2; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram0Bank_3; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram0Bank_4; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram0Bank_5; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram0Bank_6; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram0Bank_7; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram1Bank_0; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram1Bank_1; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram1Bank_2; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram1Bank_3; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram1Bank_4; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram1Bank_5; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram1Bank_6; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_readDataSram1Bank_7; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram0Bank_0; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram0Bank_1; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram0Bank_2; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram0Bank_3; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram0Bank_4; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram0Bank_5; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram0Bank_6; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram0Bank_7; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram1Bank_0; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram1Bank_1; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram1Bank_2; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram1Bank_3; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram1Bank_4; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram1Bank_5; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram1Bank_6; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_readEnableSram1Bank_7; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram0Bank_0; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram0Bank_1; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram0Bank_2; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram0Bank_3; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram0Bank_4; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram0Bank_5; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram0Bank_6; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram0Bank_7; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram1Bank_0; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram1Bank_1; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram1Bank_2; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram1Bank_3; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram1Bank_4; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram1Bank_5; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram1Bank_6; // @[FFTTop.scala 31:27]
+  wire [31:0] fftEngine_io_writeDataSram1Bank_7; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram0Bank_0; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram0Bank_1; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram0Bank_2; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram0Bank_3; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram0Bank_4; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram0Bank_5; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram0Bank_6; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram0Bank_7; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram1Bank_0; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram1Bank_1; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram1Bank_2; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram1Bank_3; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram1Bank_4; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram1Bank_5; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram1Bank_6; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_writeEnableSram1Bank_7; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram0Bank_0; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram0Bank_1; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram0Bank_2; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram0Bank_3; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram0Bank_4; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram0Bank_5; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram0Bank_6; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram0Bank_7; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram1Bank_0; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram1Bank_1; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram1Bank_2; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram1Bank_3; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram1Bank_4; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram1Bank_5; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram1Bank_6; // @[FFTTop.scala 31:27]
+  wire [6:0] fftEngine_io_addrSram1Bank_7; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_fftDone; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_fftEngineKick; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_fftMode; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_fftRShiftP0_0; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_fftRShiftP0_1; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_fftRShiftP0_2; // @[FFTTop.scala 31:27]
+  wire  fftEngine_io_fftRShiftP0_3; // @[FFTTop.scala 31:27]
+  wire  fftSram0_0_clock; // @[FFTTop.scala 32:62]
+  wire  fftSram0_0_io_readEnable; // @[FFTTop.scala 32:62]
+  wire  fftSram0_0_io_writeEnable; // @[FFTTop.scala 32:62]
+  wire [6:0] fftSram0_0_io_addr; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_0_io_dataIn; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_0_io_dataOut; // @[FFTTop.scala 32:62]
+  wire  fftSram0_1_clock; // @[FFTTop.scala 32:62]
+  wire  fftSram0_1_io_readEnable; // @[FFTTop.scala 32:62]
+  wire  fftSram0_1_io_writeEnable; // @[FFTTop.scala 32:62]
+  wire [6:0] fftSram0_1_io_addr; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_1_io_dataIn; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_1_io_dataOut; // @[FFTTop.scala 32:62]
+  wire  fftSram0_2_clock; // @[FFTTop.scala 32:62]
+  wire  fftSram0_2_io_readEnable; // @[FFTTop.scala 32:62]
+  wire  fftSram0_2_io_writeEnable; // @[FFTTop.scala 32:62]
+  wire [6:0] fftSram0_2_io_addr; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_2_io_dataIn; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_2_io_dataOut; // @[FFTTop.scala 32:62]
+  wire  fftSram0_3_clock; // @[FFTTop.scala 32:62]
+  wire  fftSram0_3_io_readEnable; // @[FFTTop.scala 32:62]
+  wire  fftSram0_3_io_writeEnable; // @[FFTTop.scala 32:62]
+  wire [6:0] fftSram0_3_io_addr; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_3_io_dataIn; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_3_io_dataOut; // @[FFTTop.scala 32:62]
+  wire  fftSram0_4_clock; // @[FFTTop.scala 32:62]
+  wire  fftSram0_4_io_readEnable; // @[FFTTop.scala 32:62]
+  wire  fftSram0_4_io_writeEnable; // @[FFTTop.scala 32:62]
+  wire [6:0] fftSram0_4_io_addr; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_4_io_dataIn; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_4_io_dataOut; // @[FFTTop.scala 32:62]
+  wire  fftSram0_5_clock; // @[FFTTop.scala 32:62]
+  wire  fftSram0_5_io_readEnable; // @[FFTTop.scala 32:62]
+  wire  fftSram0_5_io_writeEnable; // @[FFTTop.scala 32:62]
+  wire [6:0] fftSram0_5_io_addr; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_5_io_dataIn; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_5_io_dataOut; // @[FFTTop.scala 32:62]
+  wire  fftSram0_6_clock; // @[FFTTop.scala 32:62]
+  wire  fftSram0_6_io_readEnable; // @[FFTTop.scala 32:62]
+  wire  fftSram0_6_io_writeEnable; // @[FFTTop.scala 32:62]
+  wire [6:0] fftSram0_6_io_addr; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_6_io_dataIn; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_6_io_dataOut; // @[FFTTop.scala 32:62]
+  wire  fftSram0_7_clock; // @[FFTTop.scala 32:62]
+  wire  fftSram0_7_io_readEnable; // @[FFTTop.scala 32:62]
+  wire  fftSram0_7_io_writeEnable; // @[FFTTop.scala 32:62]
+  wire [6:0] fftSram0_7_io_addr; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_7_io_dataIn; // @[FFTTop.scala 32:62]
+  wire [31:0] fftSram0_7_io_dataOut; // @[FFTTop.scala 32:62]
+  wire  fftSram1_0_clock; // @[FFTTop.scala 33:62]
+  wire  fftSram1_0_io_readEnable; // @[FFTTop.scala 33:62]
+  wire  fftSram1_0_io_writeEnable; // @[FFTTop.scala 33:62]
+  wire [6:0] fftSram1_0_io_addr; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_0_io_dataIn; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_0_io_dataOut; // @[FFTTop.scala 33:62]
+  wire  fftSram1_1_clock; // @[FFTTop.scala 33:62]
+  wire  fftSram1_1_io_readEnable; // @[FFTTop.scala 33:62]
+  wire  fftSram1_1_io_writeEnable; // @[FFTTop.scala 33:62]
+  wire [6:0] fftSram1_1_io_addr; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_1_io_dataIn; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_1_io_dataOut; // @[FFTTop.scala 33:62]
+  wire  fftSram1_2_clock; // @[FFTTop.scala 33:62]
+  wire  fftSram1_2_io_readEnable; // @[FFTTop.scala 33:62]
+  wire  fftSram1_2_io_writeEnable; // @[FFTTop.scala 33:62]
+  wire [6:0] fftSram1_2_io_addr; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_2_io_dataIn; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_2_io_dataOut; // @[FFTTop.scala 33:62]
+  wire  fftSram1_3_clock; // @[FFTTop.scala 33:62]
+  wire  fftSram1_3_io_readEnable; // @[FFTTop.scala 33:62]
+  wire  fftSram1_3_io_writeEnable; // @[FFTTop.scala 33:62]
+  wire [6:0] fftSram1_3_io_addr; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_3_io_dataIn; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_3_io_dataOut; // @[FFTTop.scala 33:62]
+  wire  fftSram1_4_clock; // @[FFTTop.scala 33:62]
+  wire  fftSram1_4_io_readEnable; // @[FFTTop.scala 33:62]
+  wire  fftSram1_4_io_writeEnable; // @[FFTTop.scala 33:62]
+  wire [6:0] fftSram1_4_io_addr; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_4_io_dataIn; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_4_io_dataOut; // @[FFTTop.scala 33:62]
+  wire  fftSram1_5_clock; // @[FFTTop.scala 33:62]
+  wire  fftSram1_5_io_readEnable; // @[FFTTop.scala 33:62]
+  wire  fftSram1_5_io_writeEnable; // @[FFTTop.scala 33:62]
+  wire [6:0] fftSram1_5_io_addr; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_5_io_dataIn; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_5_io_dataOut; // @[FFTTop.scala 33:62]
+  wire  fftSram1_6_clock; // @[FFTTop.scala 33:62]
+  wire  fftSram1_6_io_readEnable; // @[FFTTop.scala 33:62]
+  wire  fftSram1_6_io_writeEnable; // @[FFTTop.scala 33:62]
+  wire [6:0] fftSram1_6_io_addr; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_6_io_dataIn; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_6_io_dataOut; // @[FFTTop.scala 33:62]
+  wire  fftSram1_7_clock; // @[FFTTop.scala 33:62]
+  wire  fftSram1_7_io_readEnable; // @[FFTTop.scala 33:62]
+  wire  fftSram1_7_io_writeEnable; // @[FFTTop.scala 33:62]
+  wire [6:0] fftSram1_7_io_addr; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_7_io_dataIn; // @[FFTTop.scala 33:62]
+  wire [31:0] fftSram1_7_io_dataOut; // @[FFTTop.scala 33:62]
+  FFTEngine fftEngine ( // @[FFTTop.scala 31:27]
+    .clock(fftEngine_clock),
+    .reset(fftEngine_reset),
+    .io_readDataSram0Bank_0(fftEngine_io_readDataSram0Bank_0),
+    .io_readDataSram0Bank_1(fftEngine_io_readDataSram0Bank_1),
+    .io_readDataSram0Bank_2(fftEngine_io_readDataSram0Bank_2),
+    .io_readDataSram0Bank_3(fftEngine_io_readDataSram0Bank_3),
+    .io_readDataSram0Bank_4(fftEngine_io_readDataSram0Bank_4),
+    .io_readDataSram0Bank_5(fftEngine_io_readDataSram0Bank_5),
+    .io_readDataSram0Bank_6(fftEngine_io_readDataSram0Bank_6),
+    .io_readDataSram0Bank_7(fftEngine_io_readDataSram0Bank_7),
+    .io_readDataSram1Bank_0(fftEngine_io_readDataSram1Bank_0),
+    .io_readDataSram1Bank_1(fftEngine_io_readDataSram1Bank_1),
+    .io_readDataSram1Bank_2(fftEngine_io_readDataSram1Bank_2),
+    .io_readDataSram1Bank_3(fftEngine_io_readDataSram1Bank_3),
+    .io_readDataSram1Bank_4(fftEngine_io_readDataSram1Bank_4),
+    .io_readDataSram1Bank_5(fftEngine_io_readDataSram1Bank_5),
+    .io_readDataSram1Bank_6(fftEngine_io_readDataSram1Bank_6),
+    .io_readDataSram1Bank_7(fftEngine_io_readDataSram1Bank_7),
+    .io_readEnableSram0Bank_0(fftEngine_io_readEnableSram0Bank_0),
+    .io_readEnableSram0Bank_1(fftEngine_io_readEnableSram0Bank_1),
+    .io_readEnableSram0Bank_2(fftEngine_io_readEnableSram0Bank_2),
+    .io_readEnableSram0Bank_3(fftEngine_io_readEnableSram0Bank_3),
+    .io_readEnableSram0Bank_4(fftEngine_io_readEnableSram0Bank_4),
+    .io_readEnableSram0Bank_5(fftEngine_io_readEnableSram0Bank_5),
+    .io_readEnableSram0Bank_6(fftEngine_io_readEnableSram0Bank_6),
+    .io_readEnableSram0Bank_7(fftEngine_io_readEnableSram0Bank_7),
+    .io_readEnableSram1Bank_0(fftEngine_io_readEnableSram1Bank_0),
+    .io_readEnableSram1Bank_1(fftEngine_io_readEnableSram1Bank_1),
+    .io_readEnableSram1Bank_2(fftEngine_io_readEnableSram1Bank_2),
+    .io_readEnableSram1Bank_3(fftEngine_io_readEnableSram1Bank_3),
+    .io_readEnableSram1Bank_4(fftEngine_io_readEnableSram1Bank_4),
+    .io_readEnableSram1Bank_5(fftEngine_io_readEnableSram1Bank_5),
+    .io_readEnableSram1Bank_6(fftEngine_io_readEnableSram1Bank_6),
+    .io_readEnableSram1Bank_7(fftEngine_io_readEnableSram1Bank_7),
+    .io_writeDataSram0Bank_0(fftEngine_io_writeDataSram0Bank_0),
+    .io_writeDataSram0Bank_1(fftEngine_io_writeDataSram0Bank_1),
+    .io_writeDataSram0Bank_2(fftEngine_io_writeDataSram0Bank_2),
+    .io_writeDataSram0Bank_3(fftEngine_io_writeDataSram0Bank_3),
+    .io_writeDataSram0Bank_4(fftEngine_io_writeDataSram0Bank_4),
+    .io_writeDataSram0Bank_5(fftEngine_io_writeDataSram0Bank_5),
+    .io_writeDataSram0Bank_6(fftEngine_io_writeDataSram0Bank_6),
+    .io_writeDataSram0Bank_7(fftEngine_io_writeDataSram0Bank_7),
+    .io_writeDataSram1Bank_0(fftEngine_io_writeDataSram1Bank_0),
+    .io_writeDataSram1Bank_1(fftEngine_io_writeDataSram1Bank_1),
+    .io_writeDataSram1Bank_2(fftEngine_io_writeDataSram1Bank_2),
+    .io_writeDataSram1Bank_3(fftEngine_io_writeDataSram1Bank_3),
+    .io_writeDataSram1Bank_4(fftEngine_io_writeDataSram1Bank_4),
+    .io_writeDataSram1Bank_5(fftEngine_io_writeDataSram1Bank_5),
+    .io_writeDataSram1Bank_6(fftEngine_io_writeDataSram1Bank_6),
+    .io_writeDataSram1Bank_7(fftEngine_io_writeDataSram1Bank_7),
+    .io_writeEnableSram0Bank_0(fftEngine_io_writeEnableSram0Bank_0),
+    .io_writeEnableSram0Bank_1(fftEngine_io_writeEnableSram0Bank_1),
+    .io_writeEnableSram0Bank_2(fftEngine_io_writeEnableSram0Bank_2),
+    .io_writeEnableSram0Bank_3(fftEngine_io_writeEnableSram0Bank_3),
+    .io_writeEnableSram0Bank_4(fftEngine_io_writeEnableSram0Bank_4),
+    .io_writeEnableSram0Bank_5(fftEngine_io_writeEnableSram0Bank_5),
+    .io_writeEnableSram0Bank_6(fftEngine_io_writeEnableSram0Bank_6),
+    .io_writeEnableSram0Bank_7(fftEngine_io_writeEnableSram0Bank_7),
+    .io_writeEnableSram1Bank_0(fftEngine_io_writeEnableSram1Bank_0),
+    .io_writeEnableSram1Bank_1(fftEngine_io_writeEnableSram1Bank_1),
+    .io_writeEnableSram1Bank_2(fftEngine_io_writeEnableSram1Bank_2),
+    .io_writeEnableSram1Bank_3(fftEngine_io_writeEnableSram1Bank_3),
+    .io_writeEnableSram1Bank_4(fftEngine_io_writeEnableSram1Bank_4),
+    .io_writeEnableSram1Bank_5(fftEngine_io_writeEnableSram1Bank_5),
+    .io_writeEnableSram1Bank_6(fftEngine_io_writeEnableSram1Bank_6),
+    .io_writeEnableSram1Bank_7(fftEngine_io_writeEnableSram1Bank_7),
+    .io_addrSram0Bank_0(fftEngine_io_addrSram0Bank_0),
+    .io_addrSram0Bank_1(fftEngine_io_addrSram0Bank_1),
+    .io_addrSram0Bank_2(fftEngine_io_addrSram0Bank_2),
+    .io_addrSram0Bank_3(fftEngine_io_addrSram0Bank_3),
+    .io_addrSram0Bank_4(fftEngine_io_addrSram0Bank_4),
+    .io_addrSram0Bank_5(fftEngine_io_addrSram0Bank_5),
+    .io_addrSram0Bank_6(fftEngine_io_addrSram0Bank_6),
+    .io_addrSram0Bank_7(fftEngine_io_addrSram0Bank_7),
+    .io_addrSram1Bank_0(fftEngine_io_addrSram1Bank_0),
+    .io_addrSram1Bank_1(fftEngine_io_addrSram1Bank_1),
+    .io_addrSram1Bank_2(fftEngine_io_addrSram1Bank_2),
+    .io_addrSram1Bank_3(fftEngine_io_addrSram1Bank_3),
+    .io_addrSram1Bank_4(fftEngine_io_addrSram1Bank_4),
+    .io_addrSram1Bank_5(fftEngine_io_addrSram1Bank_5),
+    .io_addrSram1Bank_6(fftEngine_io_addrSram1Bank_6),
+    .io_addrSram1Bank_7(fftEngine_io_addrSram1Bank_7),
+    .io_fftDone(fftEngine_io_fftDone),
+    .io_fftEngineKick(fftEngine_io_fftEngineKick),
+    .io_fftMode(fftEngine_io_fftMode),
+    .io_fftRShiftP0_0(fftEngine_io_fftRShiftP0_0),
+    .io_fftRShiftP0_1(fftEngine_io_fftRShiftP0_1),
+    .io_fftRShiftP0_2(fftEngine_io_fftRShiftP0_2),
+    .io_fftRShiftP0_3(fftEngine_io_fftRShiftP0_3)
+  );
+  FFTSram fftSram0_0 ( // @[FFTTop.scala 32:62]
+    .clock(fftSram0_0_clock),
+    .io_readEnable(fftSram0_0_io_readEnable),
+    .io_writeEnable(fftSram0_0_io_writeEnable),
+    .io_addr(fftSram0_0_io_addr),
+    .io_dataIn(fftSram0_0_io_dataIn),
+    .io_dataOut(fftSram0_0_io_dataOut)
+  );
+  FFTSram fftSram0_1 ( // @[FFTTop.scala 32:62]
+    .clock(fftSram0_1_clock),
+    .io_readEnable(fftSram0_1_io_readEnable),
+    .io_writeEnable(fftSram0_1_io_writeEnable),
+    .io_addr(fftSram0_1_io_addr),
+    .io_dataIn(fftSram0_1_io_dataIn),
+    .io_dataOut(fftSram0_1_io_dataOut)
+  );
+  FFTSram fftSram0_2 ( // @[FFTTop.scala 32:62]
+    .clock(fftSram0_2_clock),
+    .io_readEnable(fftSram0_2_io_readEnable),
+    .io_writeEnable(fftSram0_2_io_writeEnable),
+    .io_addr(fftSram0_2_io_addr),
+    .io_dataIn(fftSram0_2_io_dataIn),
+    .io_dataOut(fftSram0_2_io_dataOut)
+  );
+  FFTSram fftSram0_3 ( // @[FFTTop.scala 32:62]
+    .clock(fftSram0_3_clock),
+    .io_readEnable(fftSram0_3_io_readEnable),
+    .io_writeEnable(fftSram0_3_io_writeEnable),
+    .io_addr(fftSram0_3_io_addr),
+    .io_dataIn(fftSram0_3_io_dataIn),
+    .io_dataOut(fftSram0_3_io_dataOut)
+  );
+  FFTSram fftSram0_4 ( // @[FFTTop.scala 32:62]
+    .clock(fftSram0_4_clock),
+    .io_readEnable(fftSram0_4_io_readEnable),
+    .io_writeEnable(fftSram0_4_io_writeEnable),
+    .io_addr(fftSram0_4_io_addr),
+    .io_dataIn(fftSram0_4_io_dataIn),
+    .io_dataOut(fftSram0_4_io_dataOut)
+  );
+  FFTSram fftSram0_5 ( // @[FFTTop.scala 32:62]
+    .clock(fftSram0_5_clock),
+    .io_readEnable(fftSram0_5_io_readEnable),
+    .io_writeEnable(fftSram0_5_io_writeEnable),
+    .io_addr(fftSram0_5_io_addr),
+    .io_dataIn(fftSram0_5_io_dataIn),
+    .io_dataOut(fftSram0_5_io_dataOut)
+  );
+  FFTSram fftSram0_6 ( // @[FFTTop.scala 32:62]
+    .clock(fftSram0_6_clock),
+    .io_readEnable(fftSram0_6_io_readEnable),
+    .io_writeEnable(fftSram0_6_io_writeEnable),
+    .io_addr(fftSram0_6_io_addr),
+    .io_dataIn(fftSram0_6_io_dataIn),
+    .io_dataOut(fftSram0_6_io_dataOut)
+  );
+  FFTSram fftSram0_7 ( // @[FFTTop.scala 32:62]
+    .clock(fftSram0_7_clock),
+    .io_readEnable(fftSram0_7_io_readEnable),
+    .io_writeEnable(fftSram0_7_io_writeEnable),
+    .io_addr(fftSram0_7_io_addr),
+    .io_dataIn(fftSram0_7_io_dataIn),
+    .io_dataOut(fftSram0_7_io_dataOut)
+  );
+  FFTSram fftSram1_0 ( // @[FFTTop.scala 33:62]
+    .clock(fftSram1_0_clock),
+    .io_readEnable(fftSram1_0_io_readEnable),
+    .io_writeEnable(fftSram1_0_io_writeEnable),
+    .io_addr(fftSram1_0_io_addr),
+    .io_dataIn(fftSram1_0_io_dataIn),
+    .io_dataOut(fftSram1_0_io_dataOut)
+  );
+  FFTSram fftSram1_1 ( // @[FFTTop.scala 33:62]
+    .clock(fftSram1_1_clock),
+    .io_readEnable(fftSram1_1_io_readEnable),
+    .io_writeEnable(fftSram1_1_io_writeEnable),
+    .io_addr(fftSram1_1_io_addr),
+    .io_dataIn(fftSram1_1_io_dataIn),
+    .io_dataOut(fftSram1_1_io_dataOut)
+  );
+  FFTSram fftSram1_2 ( // @[FFTTop.scala 33:62]
+    .clock(fftSram1_2_clock),
+    .io_readEnable(fftSram1_2_io_readEnable),
+    .io_writeEnable(fftSram1_2_io_writeEnable),
+    .io_addr(fftSram1_2_io_addr),
+    .io_dataIn(fftSram1_2_io_dataIn),
+    .io_dataOut(fftSram1_2_io_dataOut)
+  );
+  FFTSram fftSram1_3 ( // @[FFTTop.scala 33:62]
+    .clock(fftSram1_3_clock),
+    .io_readEnable(fftSram1_3_io_readEnable),
+    .io_writeEnable(fftSram1_3_io_writeEnable),
+    .io_addr(fftSram1_3_io_addr),
+    .io_dataIn(fftSram1_3_io_dataIn),
+    .io_dataOut(fftSram1_3_io_dataOut)
+  );
+  FFTSram fftSram1_4 ( // @[FFTTop.scala 33:62]
+    .clock(fftSram1_4_clock),
+    .io_readEnable(fftSram1_4_io_readEnable),
+    .io_writeEnable(fftSram1_4_io_writeEnable),
+    .io_addr(fftSram1_4_io_addr),
+    .io_dataIn(fftSram1_4_io_dataIn),
+    .io_dataOut(fftSram1_4_io_dataOut)
+  );
+  FFTSram fftSram1_5 ( // @[FFTTop.scala 33:62]
+    .clock(fftSram1_5_clock),
+    .io_readEnable(fftSram1_5_io_readEnable),
+    .io_writeEnable(fftSram1_5_io_writeEnable),
+    .io_addr(fftSram1_5_io_addr),
+    .io_dataIn(fftSram1_5_io_dataIn),
+    .io_dataOut(fftSram1_5_io_dataOut)
+  );
+  FFTSram fftSram1_6 ( // @[FFTTop.scala 33:62]
+    .clock(fftSram1_6_clock),
+    .io_readEnable(fftSram1_6_io_readEnable),
+    .io_writeEnable(fftSram1_6_io_writeEnable),
+    .io_addr(fftSram1_6_io_addr),
+    .io_dataIn(fftSram1_6_io_dataIn),
+    .io_dataOut(fftSram1_6_io_dataOut)
+  );
+  FFTSram fftSram1_7 ( // @[FFTTop.scala 33:62]
+    .clock(fftSram1_7_clock),
+    .io_readEnable(fftSram1_7_io_readEnable),
+    .io_writeEnable(fftSram1_7_io_writeEnable),
+    .io_addr(fftSram1_7_io_addr),
+    .io_dataIn(fftSram1_7_io_dataIn),
+    .io_dataOut(fftSram1_7_io_dataOut)
+  );
+  assign io_fftDone = fftEngine_io_fftDone; // @[FFTTop.scala 49:16]
+  assign io_readDataSram0Bank_0 = fftSram0_0_io_dataOut; // @[FFTTop.scala 37:33]
+  assign io_readDataSram0Bank_1 = fftSram0_1_io_dataOut; // @[FFTTop.scala 37:33]
+  assign io_readDataSram0Bank_2 = fftSram0_2_io_dataOut; // @[FFTTop.scala 37:33]
+  assign io_readDataSram0Bank_3 = fftSram0_3_io_dataOut; // @[FFTTop.scala 37:33]
+  assign io_readDataSram0Bank_4 = fftSram0_4_io_dataOut; // @[FFTTop.scala 37:33]
+  assign io_readDataSram0Bank_5 = fftSram0_5_io_dataOut; // @[FFTTop.scala 37:33]
+  assign io_readDataSram0Bank_6 = fftSram0_6_io_dataOut; // @[FFTTop.scala 37:33]
+  assign io_readDataSram0Bank_7 = fftSram0_7_io_dataOut; // @[FFTTop.scala 37:33]
+  assign io_readDataSram1Bank_0 = fftSram1_0_io_dataOut; // @[FFTTop.scala 38:33]
+  assign io_readDataSram1Bank_1 = fftSram1_1_io_dataOut; // @[FFTTop.scala 38:33]
+  assign io_readDataSram1Bank_2 = fftSram1_2_io_dataOut; // @[FFTTop.scala 38:33]
+  assign io_readDataSram1Bank_3 = fftSram1_3_io_dataOut; // @[FFTTop.scala 38:33]
+  assign io_readDataSram1Bank_4 = fftSram1_4_io_dataOut; // @[FFTTop.scala 38:33]
+  assign io_readDataSram1Bank_5 = fftSram1_5_io_dataOut; // @[FFTTop.scala 38:33]
+  assign io_readDataSram1Bank_6 = fftSram1_6_io_dataOut; // @[FFTTop.scala 38:33]
+  assign io_readDataSram1Bank_7 = fftSram1_7_io_dataOut; // @[FFTTop.scala 38:33]
+  assign fftEngine_clock = clock;
+  assign fftEngine_reset = reset;
+  assign fftEngine_io_readDataSram0Bank_0 = fftSram0_0_io_dataOut; // @[FFTTop.scala 35:43]
+  assign fftEngine_io_readDataSram0Bank_1 = fftSram0_1_io_dataOut; // @[FFTTop.scala 35:43]
+  assign fftEngine_io_readDataSram0Bank_2 = fftSram0_2_io_dataOut; // @[FFTTop.scala 35:43]
+  assign fftEngine_io_readDataSram0Bank_3 = fftSram0_3_io_dataOut; // @[FFTTop.scala 35:43]
+  assign fftEngine_io_readDataSram0Bank_4 = fftSram0_4_io_dataOut; // @[FFTTop.scala 35:43]
+  assign fftEngine_io_readDataSram0Bank_5 = fftSram0_5_io_dataOut; // @[FFTTop.scala 35:43]
+  assign fftEngine_io_readDataSram0Bank_6 = fftSram0_6_io_dataOut; // @[FFTTop.scala 35:43]
+  assign fftEngine_io_readDataSram0Bank_7 = fftSram0_7_io_dataOut; // @[FFTTop.scala 35:43]
+  assign fftEngine_io_readDataSram1Bank_0 = fftSram1_0_io_dataOut; // @[FFTTop.scala 36:43]
+  assign fftEngine_io_readDataSram1Bank_1 = fftSram1_1_io_dataOut; // @[FFTTop.scala 36:43]
+  assign fftEngine_io_readDataSram1Bank_2 = fftSram1_2_io_dataOut; // @[FFTTop.scala 36:43]
+  assign fftEngine_io_readDataSram1Bank_3 = fftSram1_3_io_dataOut; // @[FFTTop.scala 36:43]
+  assign fftEngine_io_readDataSram1Bank_4 = fftSram1_4_io_dataOut; // @[FFTTop.scala 36:43]
+  assign fftEngine_io_readDataSram1Bank_5 = fftSram1_5_io_dataOut; // @[FFTTop.scala 36:43]
+  assign fftEngine_io_readDataSram1Bank_6 = fftSram1_6_io_dataOut; // @[FFTTop.scala 36:43]
+  assign fftEngine_io_readDataSram1Bank_7 = fftSram1_7_io_dataOut; // @[FFTTop.scala 36:43]
+  assign fftEngine_io_fftEngineKick = io_fftEngineKick; // @[FFTTop.scala 50:32]
+  assign fftEngine_io_fftMode = io_fftMode; // @[FFTTop.scala 51:26]
+  assign fftEngine_io_fftRShiftP0_0 = io_fftRShiftP0_0; // @[FFTTop.scala 52:30]
+  assign fftEngine_io_fftRShiftP0_1 = io_fftRShiftP0_1; // @[FFTTop.scala 52:30]
+  assign fftEngine_io_fftRShiftP0_2 = io_fftRShiftP0_2; // @[FFTTop.scala 52:30]
+  assign fftEngine_io_fftRShiftP0_3 = io_fftRShiftP0_3; // @[FFTTop.scala 52:30]
+  assign fftSram0_0_clock = clock;
+  assign fftSram0_0_io_readEnable = io_externalMode ? io_readEnableSram0Bank_0 : fftEngine_io_readEnableSram0Bank_0; // @[FFTTop.scala 40:41]
+  assign fftSram0_0_io_writeEnable = io_externalMode ? io_writeEnableSram0Bank_0 : fftEngine_io_writeEnableSram0Bank_0; // @[FFTTop.scala 44:42]
+  assign fftSram0_0_io_addr = io_externalMode ? io_addrSram0Bank_0 : fftEngine_io_addrSram0Bank_0; // @[FFTTop.scala 46:35]
+  assign fftSram0_0_io_dataIn = io_externalMode ? io_writeDataSram0Bank_0 : fftEngine_io_writeDataSram0Bank_0; // @[FFTTop.scala 42:37]
+  assign fftSram0_1_clock = clock;
+  assign fftSram0_1_io_readEnable = io_externalMode ? io_readEnableSram0Bank_1 : fftEngine_io_readEnableSram0Bank_1; // @[FFTTop.scala 40:41]
+  assign fftSram0_1_io_writeEnable = io_externalMode ? io_writeEnableSram0Bank_1 : fftEngine_io_writeEnableSram0Bank_1; // @[FFTTop.scala 44:42]
+  assign fftSram0_1_io_addr = io_externalMode ? io_addrSram0Bank_1 : fftEngine_io_addrSram0Bank_1; // @[FFTTop.scala 46:35]
+  assign fftSram0_1_io_dataIn = io_externalMode ? io_writeDataSram0Bank_1 : fftEngine_io_writeDataSram0Bank_1; // @[FFTTop.scala 42:37]
+  assign fftSram0_2_clock = clock;
+  assign fftSram0_2_io_readEnable = io_externalMode ? io_readEnableSram0Bank_2 : fftEngine_io_readEnableSram0Bank_2; // @[FFTTop.scala 40:41]
+  assign fftSram0_2_io_writeEnable = io_externalMode ? io_writeEnableSram0Bank_2 : fftEngine_io_writeEnableSram0Bank_2; // @[FFTTop.scala 44:42]
+  assign fftSram0_2_io_addr = io_externalMode ? io_addrSram0Bank_2 : fftEngine_io_addrSram0Bank_2; // @[FFTTop.scala 46:35]
+  assign fftSram0_2_io_dataIn = io_externalMode ? io_writeDataSram0Bank_2 : fftEngine_io_writeDataSram0Bank_2; // @[FFTTop.scala 42:37]
+  assign fftSram0_3_clock = clock;
+  assign fftSram0_3_io_readEnable = io_externalMode ? io_readEnableSram0Bank_3 : fftEngine_io_readEnableSram0Bank_3; // @[FFTTop.scala 40:41]
+  assign fftSram0_3_io_writeEnable = io_externalMode ? io_writeEnableSram0Bank_3 : fftEngine_io_writeEnableSram0Bank_3; // @[FFTTop.scala 44:42]
+  assign fftSram0_3_io_addr = io_externalMode ? io_addrSram0Bank_3 : fftEngine_io_addrSram0Bank_3; // @[FFTTop.scala 46:35]
+  assign fftSram0_3_io_dataIn = io_externalMode ? io_writeDataSram0Bank_3 : fftEngine_io_writeDataSram0Bank_3; // @[FFTTop.scala 42:37]
+  assign fftSram0_4_clock = clock;
+  assign fftSram0_4_io_readEnable = io_externalMode ? io_readEnableSram0Bank_4 : fftEngine_io_readEnableSram0Bank_4; // @[FFTTop.scala 40:41]
+  assign fftSram0_4_io_writeEnable = io_externalMode ? io_writeEnableSram0Bank_4 : fftEngine_io_writeEnableSram0Bank_4; // @[FFTTop.scala 44:42]
+  assign fftSram0_4_io_addr = io_externalMode ? io_addrSram0Bank_4 : fftEngine_io_addrSram0Bank_4; // @[FFTTop.scala 46:35]
+  assign fftSram0_4_io_dataIn = io_externalMode ? io_writeDataSram0Bank_4 : fftEngine_io_writeDataSram0Bank_4; // @[FFTTop.scala 42:37]
+  assign fftSram0_5_clock = clock;
+  assign fftSram0_5_io_readEnable = io_externalMode ? io_readEnableSram0Bank_5 : fftEngine_io_readEnableSram0Bank_5; // @[FFTTop.scala 40:41]
+  assign fftSram0_5_io_writeEnable = io_externalMode ? io_writeEnableSram0Bank_5 : fftEngine_io_writeEnableSram0Bank_5; // @[FFTTop.scala 44:42]
+  assign fftSram0_5_io_addr = io_externalMode ? io_addrSram0Bank_5 : fftEngine_io_addrSram0Bank_5; // @[FFTTop.scala 46:35]
+  assign fftSram0_5_io_dataIn = io_externalMode ? io_writeDataSram0Bank_5 : fftEngine_io_writeDataSram0Bank_5; // @[FFTTop.scala 42:37]
+  assign fftSram0_6_clock = clock;
+  assign fftSram0_6_io_readEnable = io_externalMode ? io_readEnableSram0Bank_6 : fftEngine_io_readEnableSram0Bank_6; // @[FFTTop.scala 40:41]
+  assign fftSram0_6_io_writeEnable = io_externalMode ? io_writeEnableSram0Bank_6 : fftEngine_io_writeEnableSram0Bank_6; // @[FFTTop.scala 44:42]
+  assign fftSram0_6_io_addr = io_externalMode ? io_addrSram0Bank_6 : fftEngine_io_addrSram0Bank_6; // @[FFTTop.scala 46:35]
+  assign fftSram0_6_io_dataIn = io_externalMode ? io_writeDataSram0Bank_6 : fftEngine_io_writeDataSram0Bank_6; // @[FFTTop.scala 42:37]
+  assign fftSram0_7_clock = clock;
+  assign fftSram0_7_io_readEnable = io_externalMode ? io_readEnableSram0Bank_7 : fftEngine_io_readEnableSram0Bank_7; // @[FFTTop.scala 40:41]
+  assign fftSram0_7_io_writeEnable = io_externalMode ? io_writeEnableSram0Bank_7 : fftEngine_io_writeEnableSram0Bank_7; // @[FFTTop.scala 44:42]
+  assign fftSram0_7_io_addr = io_externalMode ? io_addrSram0Bank_7 : fftEngine_io_addrSram0Bank_7; // @[FFTTop.scala 46:35]
+  assign fftSram0_7_io_dataIn = io_externalMode ? io_writeDataSram0Bank_7 : fftEngine_io_writeDataSram0Bank_7; // @[FFTTop.scala 42:37]
+  assign fftSram1_0_clock = clock;
+  assign fftSram1_0_io_readEnable = io_externalMode ? io_readEnableSram1Bank_0 : fftEngine_io_readEnableSram1Bank_0; // @[FFTTop.scala 41:41]
+  assign fftSram1_0_io_writeEnable = io_externalMode ? io_writeEnableSram1Bank_0 : fftEngine_io_writeEnableSram1Bank_0; // @[FFTTop.scala 45:42]
+  assign fftSram1_0_io_addr = io_externalMode ? io_addrSram1Bank_0 : fftEngine_io_addrSram1Bank_0; // @[FFTTop.scala 47:35]
+  assign fftSram1_0_io_dataIn = io_externalMode ? io_writeDataSram1Bank_0 : fftEngine_io_writeDataSram1Bank_0; // @[FFTTop.scala 43:37]
+  assign fftSram1_1_clock = clock;
+  assign fftSram1_1_io_readEnable = io_externalMode ? io_readEnableSram1Bank_1 : fftEngine_io_readEnableSram1Bank_1; // @[FFTTop.scala 41:41]
+  assign fftSram1_1_io_writeEnable = io_externalMode ? io_writeEnableSram1Bank_1 : fftEngine_io_writeEnableSram1Bank_1; // @[FFTTop.scala 45:42]
+  assign fftSram1_1_io_addr = io_externalMode ? io_addrSram1Bank_1 : fftEngine_io_addrSram1Bank_1; // @[FFTTop.scala 47:35]
+  assign fftSram1_1_io_dataIn = io_externalMode ? io_writeDataSram1Bank_1 : fftEngine_io_writeDataSram1Bank_1; // @[FFTTop.scala 43:37]
+  assign fftSram1_2_clock = clock;
+  assign fftSram1_2_io_readEnable = io_externalMode ? io_readEnableSram1Bank_2 : fftEngine_io_readEnableSram1Bank_2; // @[FFTTop.scala 41:41]
+  assign fftSram1_2_io_writeEnable = io_externalMode ? io_writeEnableSram1Bank_2 : fftEngine_io_writeEnableSram1Bank_2; // @[FFTTop.scala 45:42]
+  assign fftSram1_2_io_addr = io_externalMode ? io_addrSram1Bank_2 : fftEngine_io_addrSram1Bank_2; // @[FFTTop.scala 47:35]
+  assign fftSram1_2_io_dataIn = io_externalMode ? io_writeDataSram1Bank_2 : fftEngine_io_writeDataSram1Bank_2; // @[FFTTop.scala 43:37]
+  assign fftSram1_3_clock = clock;
+  assign fftSram1_3_io_readEnable = io_externalMode ? io_readEnableSram1Bank_3 : fftEngine_io_readEnableSram1Bank_3; // @[FFTTop.scala 41:41]
+  assign fftSram1_3_io_writeEnable = io_externalMode ? io_writeEnableSram1Bank_3 : fftEngine_io_writeEnableSram1Bank_3; // @[FFTTop.scala 45:42]
+  assign fftSram1_3_io_addr = io_externalMode ? io_addrSram1Bank_3 : fftEngine_io_addrSram1Bank_3; // @[FFTTop.scala 47:35]
+  assign fftSram1_3_io_dataIn = io_externalMode ? io_writeDataSram1Bank_3 : fftEngine_io_writeDataSram1Bank_3; // @[FFTTop.scala 43:37]
+  assign fftSram1_4_clock = clock;
+  assign fftSram1_4_io_readEnable = io_externalMode ? io_readEnableSram1Bank_4 : fftEngine_io_readEnableSram1Bank_4; // @[FFTTop.scala 41:41]
+  assign fftSram1_4_io_writeEnable = io_externalMode ? io_writeEnableSram1Bank_4 : fftEngine_io_writeEnableSram1Bank_4; // @[FFTTop.scala 45:42]
+  assign fftSram1_4_io_addr = io_externalMode ? io_addrSram1Bank_4 : fftEngine_io_addrSram1Bank_4; // @[FFTTop.scala 47:35]
+  assign fftSram1_4_io_dataIn = io_externalMode ? io_writeDataSram1Bank_4 : fftEngine_io_writeDataSram1Bank_4; // @[FFTTop.scala 43:37]
+  assign fftSram1_5_clock = clock;
+  assign fftSram1_5_io_readEnable = io_externalMode ? io_readEnableSram1Bank_5 : fftEngine_io_readEnableSram1Bank_5; // @[FFTTop.scala 41:41]
+  assign fftSram1_5_io_writeEnable = io_externalMode ? io_writeEnableSram1Bank_5 : fftEngine_io_writeEnableSram1Bank_5; // @[FFTTop.scala 45:42]
+  assign fftSram1_5_io_addr = io_externalMode ? io_addrSram1Bank_5 : fftEngine_io_addrSram1Bank_5; // @[FFTTop.scala 47:35]
+  assign fftSram1_5_io_dataIn = io_externalMode ? io_writeDataSram1Bank_5 : fftEngine_io_writeDataSram1Bank_5; // @[FFTTop.scala 43:37]
+  assign fftSram1_6_clock = clock;
+  assign fftSram1_6_io_readEnable = io_externalMode ? io_readEnableSram1Bank_6 : fftEngine_io_readEnableSram1Bank_6; // @[FFTTop.scala 41:41]
+  assign fftSram1_6_io_writeEnable = io_externalMode ? io_writeEnableSram1Bank_6 : fftEngine_io_writeEnableSram1Bank_6; // @[FFTTop.scala 45:42]
+  assign fftSram1_6_io_addr = io_externalMode ? io_addrSram1Bank_6 : fftEngine_io_addrSram1Bank_6; // @[FFTTop.scala 47:35]
+  assign fftSram1_6_io_dataIn = io_externalMode ? io_writeDataSram1Bank_6 : fftEngine_io_writeDataSram1Bank_6; // @[FFTTop.scala 43:37]
+  assign fftSram1_7_clock = clock;
+  assign fftSram1_7_io_readEnable = io_externalMode ? io_readEnableSram1Bank_7 : fftEngine_io_readEnableSram1Bank_7; // @[FFTTop.scala 41:41]
+  assign fftSram1_7_io_writeEnable = io_externalMode ? io_writeEnableSram1Bank_7 : fftEngine_io_writeEnableSram1Bank_7; // @[FFTTop.scala 45:42]
+  assign fftSram1_7_io_addr = io_externalMode ? io_addrSram1Bank_7 : fftEngine_io_addrSram1Bank_7; // @[FFTTop.scala 47:35]
+  assign fftSram1_7_io_dataIn = io_externalMode ? io_writeDataSram1Bank_7 : fftEngine_io_writeDataSram1Bank_7; // @[FFTTop.scala 43:37]
+endmodule
