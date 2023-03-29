@@ -189,7 +189,7 @@ class FFTEngine extends Module with DataConfig{
     }
 
     val kernelState = (stateReg === kernelPP)
-    val procState = (stateReg === procPP)
+    val procState = if(needProc) (stateReg === procPP) else false.B
 
     val readEnable = kernelState | procState
 
@@ -374,15 +374,22 @@ class FFTEngine extends Module with DataConfig{
     
     val addrSBankSelProc = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
     val addrTBankSelProc = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
-    for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-        val addrSBankSelProcPre = Wire(Vec(parallelCnt, UInt(1.W)))
-        val addrTBankSelProcPre = Wire(Vec(parallelCnt, UInt(1.W)))
-        for(j <- 0 until parallelCnt) {
-            addrSBankSelProcPre(j) := addrS(i)(j) ^ addrS(i)(addrWidth - 1 - j)
-            addrTBankSelProcPre(j) := addrT(i)(j) ^ addrT(i)(addrWidth - 1 - j)
+    if(needProc) {
+        for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+            val addrSBankSelProcPre = Wire(Vec(parallelCnt, UInt(1.W)))
+            val addrTBankSelProcPre = Wire(Vec(parallelCnt, UInt(1.W)))
+            for(j <- 0 until parallelCnt) {
+                addrSBankSelProcPre(j) := addrS(i)(j) ^ addrS(i)(addrWidth - 1 - j)
+                addrTBankSelProcPre(j) := addrT(i)(j) ^ addrT(i)(addrWidth - 1 - j)
+            }
+            addrSBankSelProc(i) := addrSBankSelProcPre.reduce((x, y) => Cat(x, y))
+            addrTBankSelProc(i) := addrTBankSelProcPre.reduce((x, y) => Cat(x, y))
         }
-        addrSBankSelProc(i) := addrSBankSelProcPre.reduce((x, y) => Cat(x, y))
-        addrTBankSelProc(i) := addrTBankSelProcPre.reduce((x, y) => Cat(x, y))
+    } else {
+        for(i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+            addrSBankSelProc(i) := 0.U
+            addrTBankSelProc(i) := 1.U
+        }
     }
 
     val addrSBankSelKernel1c = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
