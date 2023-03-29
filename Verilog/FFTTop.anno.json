@@ -3,277 +3,133 @@
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTTwiddle_1",
     "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_1:FFT3PipelineCalc_1/fftTwiddle:FFTTwiddle_1",
-    "index":0.04081632653061224
+    "index":0.08
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFT3PipelineCalc_1",
     "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_1:FFT3PipelineCalc_1",
-    "index":0.061224489795918366
+    "index":0.12
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTTwiddle_2",
     "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_2:FFT3PipelineCalc_1/fftTwiddle:FFTTwiddle_1",
-    "index":0.08163265306122448
+    "index":0.16
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFT3PipelineCalc_2",
     "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_2:FFT3PipelineCalc_1",
-    "index":0.10204081632653061
+    "index":0.2
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTTwiddle_3",
     "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_3:FFT3PipelineCalc_1/fftTwiddle:FFTTwiddle_1",
-    "index":0.12244897959183673
+    "index":0.24
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFT3PipelineCalc_3",
     "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_3:FFT3PipelineCalc_1",
-    "index":0.14285714285714285
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTTwiddle_4",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_4:FFT3PipelineCalc_1/fftTwiddle:FFTTwiddle_1",
-    "index":0.16326530612244897
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFT3PipelineCalc_4",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_4:FFT3PipelineCalc_1",
-    "index":0.1836734693877551
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTTwiddle_5",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_5:FFT3PipelineCalc_1/fftTwiddle:FFTTwiddle_1",
-    "index":0.20408163265306123
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFT3PipelineCalc_5",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_5:FFT3PipelineCalc_1",
-    "index":0.22448979591836735
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTTwiddle_6",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_6:FFT3PipelineCalc_1/fftTwiddle:FFTTwiddle_1",
-    "index":0.24489795918367346
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFT3PipelineCalc_6",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_6:FFT3PipelineCalc_1",
-    "index":0.2653061224489796
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTTwiddle_7",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_7:FFT3PipelineCalc_1/fftTwiddle:FFTTwiddle_1",
-    "index":0.2857142857142857
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFT3PipelineCalc_7",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc_7:FFT3PipelineCalc_1",
-    "index":0.30612244897959184
+    "index":0.28
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram",
     "duplicate":"~FFTTop|FFTTop/fftSram0_0:FFTSram",
-    "index":0.3469387755102041
+    "index":0.36
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_1",
     "duplicate":"~FFTTop|FFTTop/fftSram0_1:FFTSram",
-    "index":0.3673469387755102
+    "index":0.4
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_2",
     "duplicate":"~FFTTop|FFTTop/fftSram0_2:FFTSram",
-    "index":0.3877551020408163
+    "index":0.44
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_3",
     "duplicate":"~FFTTop|FFTTop/fftSram0_3:FFTSram",
-    "index":0.40816326530612246
+    "index":0.48
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_4",
     "duplicate":"~FFTTop|FFTTop/fftSram0_4:FFTSram",
-    "index":0.42857142857142855
+    "index":0.52
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_5",
     "duplicate":"~FFTTop|FFTTop/fftSram0_5:FFTSram",
-    "index":0.4489795918367347
+    "index":0.56
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_6",
     "duplicate":"~FFTTop|FFTTop/fftSram0_6:FFTSram",
-    "index":0.46938775510204084
+    "index":0.6
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_7",
     "duplicate":"~FFTTop|FFTTop/fftSram0_7:FFTSram",
-    "index":0.4897959183673469
+    "index":0.64
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_8",
-    "duplicate":"~FFTTop|FFTTop/fftSram0_8:FFTSram",
-    "index":0.5102040816326531
+    "duplicate":"~FFTTop|FFTTop/fftSram1_0:FFTSram",
+    "index":0.68
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_9",
-    "duplicate":"~FFTTop|FFTTop/fftSram0_9:FFTSram",
-    "index":0.5306122448979592
+    "duplicate":"~FFTTop|FFTTop/fftSram1_1:FFTSram",
+    "index":0.72
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_10",
-    "duplicate":"~FFTTop|FFTTop/fftSram0_10:FFTSram",
-    "index":0.5510204081632653
+    "duplicate":"~FFTTop|FFTTop/fftSram1_2:FFTSram",
+    "index":0.76
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_11",
-    "duplicate":"~FFTTop|FFTTop/fftSram0_11:FFTSram",
-    "index":0.5714285714285714
+    "duplicate":"~FFTTop|FFTTop/fftSram1_3:FFTSram",
+    "index":0.8
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_12",
-    "duplicate":"~FFTTop|FFTTop/fftSram0_12:FFTSram",
-    "index":0.5918367346938775
+    "duplicate":"~FFTTop|FFTTop/fftSram1_4:FFTSram",
+    "index":0.84
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_13",
-    "duplicate":"~FFTTop|FFTTop/fftSram0_13:FFTSram",
-    "index":0.6122448979591837
+    "duplicate":"~FFTTop|FFTTop/fftSram1_5:FFTSram",
+    "index":0.88
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_14",
-    "duplicate":"~FFTTop|FFTTop/fftSram0_14:FFTSram",
-    "index":0.6326530612244898
+    "duplicate":"~FFTTop|FFTTop/fftSram1_6:FFTSram",
+    "index":0.92
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTSram_15",
-    "duplicate":"~FFTTop|FFTTop/fftSram0_15:FFTSram",
-    "index":0.6530612244897959
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_16",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_0:FFTSram",
-    "index":0.673469387755102
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_17",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_1:FFTSram",
-    "index":0.6938775510204082
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_18",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_2:FFTSram",
-    "index":0.7142857142857143
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_19",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_3:FFTSram",
-    "index":0.7346938775510204
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_20",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_4:FFTSram",
-    "index":0.7551020408163265
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_21",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_5:FFTSram",
-    "index":0.7755102040816326
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_22",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_6:FFTSram",
-    "index":0.7959183673469388
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_23",
     "duplicate":"~FFTTop|FFTTop/fftSram1_7:FFTSram",
-    "index":0.8163265306122449
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_24",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_8:FFTSram",
-    "index":0.8367346938775511
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_25",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_9:FFTSram",
-    "index":0.8571428571428571
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_26",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_10:FFTSram",
-    "index":0.8775510204081632
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_27",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_11:FFTSram",
-    "index":0.8979591836734694
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_28",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_12:FFTSram",
-    "index":0.9183673469387755
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_29",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_13:FFTSram",
-    "index":0.9387755102040817
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_30",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_14:FFTSram",
-    "index":0.9591836734693877
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~FFTTop|FFTSram_31",
-    "duplicate":"~FFTTop|FFTTop/fftSram1_15:FFTSram",
-    "index":0.9795918367346939
+    "index":0.96
   },
   {
     "class":"firrtl.EmitCircuitAnnotation",
@@ -285,20 +141,11 @@
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram1Bank_8",
+    "sink":"~FFTTop|FFTTop>io_readDataSram1Bank_0",
     "sources":[
       "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram1Bank_8",
-      "~FFTTop|FFTTop>io_writeEnableSram1Bank_8"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram0Bank_15",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram0Bank_15",
-      "~FFTTop|FFTTop>io_writeEnableSram0Bank_15"
+      "~FFTTop|FFTTop>io_readEnableSram1Bank_0",
+      "~FFTTop|FFTTop>io_writeEnableSram1Bank_0"
     ]
   },
   {
@@ -308,51 +155,6 @@
       "~FFTTop|FFTTop>io_externalMode",
       "~FFTTop|FFTTop>io_readEnableSram0Bank_7",
       "~FFTTop|FFTTop>io_writeEnableSram0Bank_7"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram1Bank_12",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram1Bank_12",
-      "~FFTTop|FFTTop>io_writeEnableSram1Bank_12"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram1Bank_10",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram1Bank_10",
-      "~FFTTop|FFTTop>io_writeEnableSram1Bank_10"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram1Bank_15",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram1Bank_15",
-      "~FFTTop|FFTTop>io_writeEnableSram1Bank_15"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram0Bank_12",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram0Bank_12",
-      "~FFTTop|FFTTop>io_writeEnableSram0Bank_12"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram0Bank_10",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram0Bank_10",
-      "~FFTTop|FFTTop>io_writeEnableSram0Bank_10"
     ]
   },
   {
@@ -375,15 +177,6 @@
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram0Bank_14",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram0Bank_14",
-      "~FFTTop|FFTTop>io_writeEnableSram0Bank_14"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
     "sink":"~FFTTop|FFTTop>io_readDataSram0Bank_0",
     "sources":[
       "~FFTTop|FFTTop>io_externalMode",
@@ -393,38 +186,11 @@
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram0Bank_8",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram0Bank_8",
-      "~FFTTop|FFTTop>io_writeEnableSram0Bank_8"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
     "sink":"~FFTTop|FFTTop>io_readDataSram1Bank_3",
     "sources":[
       "~FFTTop|FFTTop>io_externalMode",
       "~FFTTop|FFTTop>io_readEnableSram1Bank_3",
       "~FFTTop|FFTTop>io_writeEnableSram1Bank_3"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram1Bank_11",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram1Bank_11",
-      "~FFTTop|FFTTop>io_writeEnableSram1Bank_11"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram1Bank_14",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram1Bank_14",
-      "~FFTTop|FFTTop>io_writeEnableSram1Bank_14"
     ]
   },
   {
@@ -443,15 +209,6 @@
       "~FFTTop|FFTTop>io_externalMode",
       "~FFTTop|FFTTop>io_readEnableSram1Bank_2",
       "~FFTTop|FFTTop>io_writeEnableSram1Bank_2"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram1Bank_9",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram1Bank_9",
-      "~FFTTop|FFTTop>io_writeEnableSram1Bank_9"
     ]
   },
   {
@@ -479,15 +236,6 @@
       "~FFTTop|FFTTop>io_externalMode",
       "~FFTTop|FFTTop>io_readEnableSram1Bank_5",
       "~FFTTop|FFTTop>io_writeEnableSram1Bank_5"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram1Bank_13",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram1Bank_13",
-      "~FFTTop|FFTTop>io_writeEnableSram1Bank_13"
     ]
   },
   {
@@ -528,47 +276,11 @@
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram0Bank_13",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram0Bank_13",
-      "~FFTTop|FFTTop>io_writeEnableSram0Bank_13"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram1Bank_0",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram1Bank_0",
-      "~FFTTop|FFTTop>io_writeEnableSram1Bank_0"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram0Bank_11",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram0Bank_11",
-      "~FFTTop|FFTTop>io_writeEnableSram0Bank_11"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
     "sink":"~FFTTop|FFTTop>io_readDataSram0Bank_1",
     "sources":[
       "~FFTTop|FFTTop>io_externalMode",
       "~FFTTop|FFTTop>io_readEnableSram0Bank_1",
       "~FFTTop|FFTTop>io_writeEnableSram0Bank_1"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram0Bank_9",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram0Bank_9",
-      "~FFTTop|FFTTop>io_writeEnableSram0Bank_9"
     ]
   }
 ]
