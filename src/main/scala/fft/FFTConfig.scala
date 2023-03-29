@@ -12,4 +12,5 @@ trait DataConfig{
     val stageCnt = (addrWidth / 3.0).ceil.round.toInt - 1
     val lastStageMode = if(addrWidth % 3 == 0) 3 else addrWidth % 3 
     val midBankSel = pow(2, parallelCnt - 1).toInt
+    val needProc = true
 }
