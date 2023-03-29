@@ -38,7 +38,7 @@ class FFT3PipelineR23Calc extends Module with DataConfig{
     val lastPhase = io.phaseCount === stageCnt.U
 
     val multiplyUnits = Seq.fill(9)(Module(new FFTMultiply))
-    val twiddleUnits = Seq.tabulate(7) {i => Module(new FFTTwiddle(if(i == 0) 0 else 1))}
+    val twiddleUnits = Seq.tabulate(7) {i => Module(new FFTTwiddle(if(i == 0 && needProc) 0 else 1))}
 
     val dataInRnd = Wire(Vec(pow(2, 3).toInt, new MyComplex()))
     for(i <- 0 until 8 by 1) {

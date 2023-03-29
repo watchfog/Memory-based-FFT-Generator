@@ -55,38 +55,44 @@
   },
   {
     "class":"firrtl.transforms.DedupedResult",
+    "original":"~FFTTop|FFTTwiddle",
+    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_0:FFTTwiddle",
+    "index":0.2647058823529412
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTTwiddle_1",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_1:FFTTwiddle_1",
+    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_1:FFTTwiddle",
     "index":0.29411764705882354
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTTwiddle_2",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_2:FFTTwiddle_1",
+    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_2:FFTTwiddle",
     "index":0.3235294117647059
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTTwiddle_3",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_3:FFTTwiddle_1",
+    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_3:FFTTwiddle",
     "index":0.35294117647058826
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTTwiddle_4",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_4:FFTTwiddle_1",
+    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_4:FFTTwiddle",
     "index":0.38235294117647056
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTTwiddle_5",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_5:FFTTwiddle_1",
+    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_5:FFTTwiddle",
     "index":0.4117647058823529
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~FFTTop|FFTTwiddle_6",
-    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_6:FFTTwiddle_1",
+    "duplicate":"~FFTTop|FFTTop/fftEngine:FFTEngine/fftCalc:FFT3PipelineR23Calc/twiddleUnits_6:FFTTwiddle",
     "index":0.4411764705882353
   },
   {
@@ -200,6 +206,15 @@
       "~FFTTop|FFTTop>io_externalMode",
       "~FFTTop|FFTTop>io_readEnableSram1Bank_0",
       "~FFTTop|FFTTop>io_writeEnableSram1Bank_0"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~FFTTop|FFTTop>io_readDataSram0Bank_1",
+    "sources":[
+      "~FFTTop|FFTTop>io_externalMode",
+      "~FFTTop|FFTTop>io_readEnableSram0Bank_1",
+      "~FFTTop|FFTTop>io_writeEnableSram0Bank_1"
     ]
   },
   {
@@ -326,15 +341,6 @@
       "~FFTTop|FFTTop>io_externalMode",
       "~FFTTop|FFTTop>io_readEnableSram0Bank_6",
       "~FFTTop|FFTTop>io_writeEnableSram0Bank_6"
-    ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~FFTTop|FFTTop>io_readDataSram0Bank_1",
-    "sources":[
-      "~FFTTop|FFTTop>io_externalMode",
-      "~FFTTop|FFTTop>io_readEnableSram0Bank_1",
-      "~FFTTop|FFTTop>io_writeEnableSram0Bank_1"
     ]
   }
 ]

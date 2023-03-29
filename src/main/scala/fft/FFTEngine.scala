@@ -49,60 +49,98 @@ class FFTEngine extends Module with DataConfig{
 
     val phaseCount = RegInit(0.U(log2Ceil(stageCnt + 1).W))
 
-    switch(stateReg) {
-        is(waitKick) {
-            when(io.fftEngineKick) {
-                stateReg := Mux(isFFT, kernelPP, procPP)
-            } .otherwise {
-                stateReg := stateReg
+    if(needProc) {
+        switch(stateReg) {
+            is(waitKick) {
+                when(io.fftEngineKick) {
+                    stateReg := Mux(isFFT, kernelPP, procPP)
+                } .otherwise {
+                    stateReg := stateReg
+                }
+            }
+            is(kernelPP) {
+                when(radixCount === FFTCycleVal) {
+                    stateReg := kernelPPL
+                } .otherwise{
+                    stateReg := stateReg
+                }
+            }
+            is(kernelPPL) {
+                when(radixCount === FFTLatency) {
+                    stateReg := kernelPPGap
+                } .otherwise{
+                    stateReg := stateReg
+                }
+            }
+            is(kernelPPGap) {
+                when(phaseCount === FFTPhaseVal) {
+                    stateReg := Mux(isFFT, procPP, fftDone)
+                } .otherwise{
+                    stateReg := kernelPP
+                }
+            }
+            is(procPP) {
+                when(radixCount === ProcCycleVal) {
+                    stateReg := procPPL
+                } .otherwise{
+                    stateReg := stateReg
+                }
+            }
+            is(procPPL) {
+                when(radixCount === ProcLatency) {
+                    stateReg := procPPGap
+                } .otherwise{
+                    stateReg := stateReg
+                }
+            }
+            is(procPPGap) {
+                when(phaseCount === ProcPhaseVal) {
+                    stateReg := Mux(isFFT, fftDone, kernelPP)
+                } .otherwise{
+                    stateReg := procPP
+                }
+            }
+            is(fftDone) {
+                stateReg := waitKick
             }
         }
-        is(kernelPP) {
-            when(radixCount === FFTCycleVal) {
-                stateReg := kernelPPL
-            } .otherwise{
-                stateReg := stateReg
+    } else {
+        switch(stateReg) {
+            is(waitKick) {
+                when(io.fftEngineKick) {
+                    stateReg := kernelPP
+                } .otherwise {
+                    stateReg := stateReg
+                }
             }
-        }
-        is(kernelPPL) {
-            when(radixCount === FFTLatency) {
-                stateReg := kernelPPGap
-            } .otherwise{
-                stateReg := stateReg
+            is(kernelPP) {
+                when(radixCount === FFTCycleVal) {
+                    stateReg := kernelPPL
+                } .otherwise{
+                    stateReg := stateReg
+                }
             }
-        }
-        is(kernelPPGap) {
-            when(phaseCount === FFTPhaseVal) {
-                stateReg := Mux(isFFT, procPP, fftDone)
-            } .otherwise{
-                stateReg := kernelPP
+            is(kernelPPL) {
+                when(radixCount === FFTLatency) {
+                    stateReg := kernelPPGap
+                } .otherwise{
+                    stateReg := stateReg
+                }
             }
-        }
-        is(procPP) {
-            when(radixCount === ProcCycleVal) {
-                stateReg := procPPL
-            } .otherwise{
-                stateReg := stateReg
+            is(kernelPPGap) {
+                when(phaseCount === FFTPhaseVal) {
+                    stateReg := fftDone
+                } .otherwise{
+                    stateReg := kernelPP
+                }
             }
-        }
-        is(procPPL) {
-            when(radixCount === ProcLatency) {
-                stateReg := procPPGap
-            } .otherwise{
-                stateReg := stateReg
+            is(fftDone) {
+                stateReg := waitKick
             }
-        }
-        is(procPPGap) {
-            when(phaseCount === ProcPhaseVal) {
-                stateReg := Mux(isFFT, fftDone, kernelPP)
-            } .otherwise{
-                stateReg := procPP
-            }
-        }
-        is(fftDone) {
-            stateReg := waitKick
         }
     }
+
+
 
     val radixInit = (stateReg === waitKick) |
     ((stateReg === kernelPP) && (radixCount === FFTCycleVal)) |
@@ -153,7 +191,7 @@ class FFTEngine extends Module with DataConfig{
     }
 
     val kernelState = (stateReg === kernelPP)
-    val procState = (stateReg === procPP)
+    val procState = if(needProc) (stateReg === procPP) else false.B
 
     val readEnable = kernelState | procState
 
