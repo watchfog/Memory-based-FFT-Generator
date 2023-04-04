@@ -4,7 +4,8 @@ import chisel3.util.log2Ceil
 import scala.math._
 
 trait DataConfig{
-    val fftLength = 128
+    val needProc = false
+    val fftLength = 2048
     val fftDataWidth = 14
     val twiddleDataWidth = 12
     val parallelCnt = 3 // as it's radix-2^3
@@ -12,5 +13,4 @@ trait DataConfig{
     val stageCnt = (addrWidth / 3.0).ceil.round.toInt - 1
     val lastStageMode = if(addrWidth % 3 == 0) 3 else addrWidth % 3 
     val midBankSel = pow(2, parallelCnt - 1).toInt
-    val needProc = false
 }

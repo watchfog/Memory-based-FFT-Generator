@@ -5,24 +5,15 @@ import firrtl.options.TargetDirAnnotation
  
 object emitTop extends App with DataConfig{  
   val myverilog = (new ChiselStage).emitVerilog(
-    new FFTMultiply(),
-    Array("--target-dir", "Verilog", "--output-file", s"FFTMultiply.v")
+    new FFTTop(),
+    Array("--target-dir", "Verilog", "--output-file", s"FFTTop_R23_${fftLength}.v")
   )
 }
 
-object emitEngine extends App {  
-  (new chisel3.stage.ChiselStage).execute(
-    Array("-X", "verilog", "--full-stacktrace"),
-    Seq(ChiselGeneratorAnnotation(() => new FFTEngine()),
-      TargetDirAnnotation("Verilog"))
-  )
-}
-
-object emitSram extends App {  
-  (new chisel3.stage.ChiselStage).execute(
-    Array("-X", "verilog", "--full-stacktrace"),
-    Seq(ChiselGeneratorAnnotation(() => new FFTSram()),
-      TargetDirAnnotation("Verilog"))
+object emitEngine extends App with DataConfig{  
+  val myverilog = (new ChiselStage).emitVerilog(
+    new FFTEngine(),
+    Array("--target-dir", "Verilog", "--output-file", s"FFTEngine_R23_${fftLength}.v")
   )
 }
 
