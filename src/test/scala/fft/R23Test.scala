@@ -95,7 +95,7 @@ class FFTR23Test extends AnyFreeSpec with ChiselScalatestTester with DataConfig 
             dut.io.fftEngineKick.poke(false.B)
 
             dut.io.fftRShiftP0(1).poke(true.B)
-            dut.io.fftRShiftP0(3).poke(true.B)
+            // dut.io.fftRShiftP0(3).poke(true.B)
             dut.clock.step()
 
             //kick
@@ -602,7 +602,7 @@ class FFTR23Test extends AnyFreeSpec with ChiselScalatestTester with DataConfig 
                     sramData = sram1bank(bankSel)(bankAddr)
                 }
 
-                var fftOut = complexUInt2Complex(sramData) * new Complex(4, 0)
+                var fftOut = complexUInt2Complex(sramData) * new Complex(2, 0)
                 // var fftDiffAbsR = (fftOut.re - fftRefOut(radix).re).abs
                 // var fftDiffAbsI = (fftOut.im - fftRefOut(radix).im).abs
                 // var fftCmR = fftOut.re.abs + fftRefOut(radix).re.abs
