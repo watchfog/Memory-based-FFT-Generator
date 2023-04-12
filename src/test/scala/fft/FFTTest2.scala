@@ -10,7 +10,10 @@ import chiseltest.simulator.VerilatorBackendAnnotation
 
 class FFTEngineTest2 extends AnyFreeSpec with ChiselScalatestTester with DataConfig {
     val OutputDataFlow = false
-    val RPCnt = 10000
+    val OutputPhase = false
+    val RPCnt = 10
+    val DataAmp = 13
+    val ShiftCnt = DataAmp - 10
     "FFTEngine with fixedpoint should calculate RFFT repeatly" in {
         // test(new FFTEngine).withAnnotations(Seq(WriteVcdAnnotation, VerilatorBackendAnnotation)) { dut =>
         test(new FFTEngine).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
@@ -46,7 +49,11 @@ class FFTEngineTest2 extends AnyFreeSpec with ChiselScalatestTester with DataCon
             }
 
             var sqnrSum = 0.0
+            var sqnrLow = 100.0
             //initialize
+            val shiftAll = Seq.range(0, stageCnt + 1)
+            val shiftCombinations = shiftAll.combinations(ShiftCnt).toList
+            for(shiftCombo <- shiftCombinations) {
             for(rp <- 0 until RPCnt by 1) {
                 for(i <- 0 to stageCnt by 1) {
                     dut.io.fftRShiftP0(i).poke(false.B)
@@ -58,8 +65,10 @@ class FFTEngineTest2 extends AnyFreeSpec with ChiselScalatestTester with DataCon
                 }
                 dut.io.fftEngineKick.poke(false.B)
 
-                // dut.io.fftRShiftP0(1).poke(true.B)
-                // dut.io.fftRShiftP0(3).poke(true.B)
+                shiftCombo.foreach{
+                    dut.io.fftRShiftP0(_).poke(true.B)
+                }
+
                 dut.clock.step()
 
                 //kick
@@ -82,9 +91,29 @@ class FFTEngineTest2 extends AnyFreeSpec with ChiselScalatestTester with DataCon
                     val t2: Double = n2 * 2.0 * Pi / fftLength.toDouble
                     // var temp1 = (1 * sin(2 * t1) + 1 * cos(2 * t1) + 2) * pow(2, 7)
                     // var temp2 = (1 * sin(2 * t2) + 1 * cos(2 * t2) + 2) * pow(2, 7)
-                    val temp1 = scala.util.Random.between(0, pow(2, 12))
-                    val temp2 = scala.util.Random.between(0, pow(2, 12))
-                    var tempU = (1 * round(temp2.abs) * pow(2, fftDataWidth + 2) + 1 * round(temp1.abs)).toLong.asUInt
+                    val temp1 = scala.util.Random.between(-pow(2, DataAmp), pow(2, DataAmp))
+                    val temp2 = scala.util.Random.between(-pow(2, DataAmp), pow(2, DataAmp))
+                    var temp1u = 0.0
+                    var temp2u = 0.0
+                    if (temp1 < 0) {
+                        temp1u = pow(2, fftDataWidth + 2) - temp1.abs.round
+                        if(temp1u == 65536){
+                            temp1u = 0
+                        }
+                        assert(temp1u <= 65535, "temp1u在u16范围内")
+                    } else {
+                        temp1u = temp1
+                    }
+                    if (temp2 < 0) {
+                        temp2u = pow(2, fftDataWidth + 2) - temp2.abs.round
+                        if(temp2u == 65536){
+                            temp2u = 0
+                        }
+                        assert(temp2u <= 65535, "temp2u在u16范围内")
+                    } else {
+                        temp2u = temp2
+                    }
+                    var tempU = (1 * round(temp2u) * pow(2, fftDataWidth + 2) + 1 * round(temp1u)).toLong.asUInt
                     fftRefIn(2 * n) = new Complex(temp1, 0)
                     fftRefIn(2 * n + 1) = new Complex(temp2, 0)
                     tempU
@@ -131,8 +160,8 @@ class FFTEngineTest2 extends AnyFreeSpec with ChiselScalatestTester with DataCon
                 }
                 
                 for(phase <- 0 until log2Ceil(fftLength)) {
-                    println("KernelPhase" + phase)
-                    println("----------------------------")
+                    if(OutputPhase) println("KernelPhase" + phase)
+                    if(OutputPhase) println("----------------------------")
                     //first step, no valid input
                     if(phase % 2 == 0) { //srcBuffer = 0
                         for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
@@ -234,8 +263,8 @@ class FFTEngineTest2 extends AnyFreeSpec with ChiselScalatestTester with DataCon
                 }
 
                 for(phase <- 0 until 2) {
-                    println("ProcPhase" + phase)
-                    println("----------------------------")
+                    if(OutputPhase) println("ProcPhase" + phase)
+                    if(OutputPhase) println("----------------------------")
                     //first step, no valid input
                     if((phase + log2Ceil(fftLength)) % 2 == 0) { //srcBuffer = 0
                         for(i <- 0 until pow(2, parallelCnt).toInt by 1) {
@@ -358,22 +387,31 @@ class FFTEngineTest2 extends AnyFreeSpec with ChiselScalatestTester with DataCon
                         sramData = sram1bank(bankSel)(bankAddr)
                     }
 
-                    var fftOut = complexUInt2Complex(sramData)
+                    var fftOut = complexUInt2Complex(sramData) * new Complex(pow(2, ShiftCnt), 0)
                     var fftDiff = fftOut - fftRefOut(radix)
                     fftDiffSquareSum = fftDiff.re * fftDiff.re + fftDiff.im * fftDiff.im + fftDiffSquareSum
                     fftRefSquareSum = fftRefOut(radix).re * fftRefOut(radix).re + fftRefOut(radix).im * fftRefOut(radix).im + fftRefSquareSum
 
-                    println(s"$radix: " + complexUInt2Complex(sramData))
-                    println(s"Ref: "  + fftRefOut(radix))
+                    // println(s"$radix: " + fftOut)
+                    // println(s"Ref: "  + fftRefOut(radix))
                     // println(fftDiffSquareSum + " " + fftRefSquareSum)
                 }
                 var sqnr = 10 * log10(fftRefSquareSum / fftDiffSquareSum)
                 sqnrSum = sqnrSum + sqnr
-                // println("SQNR: " + sqnr)
-
+                // println(f"SQNR: ${sqnr}%.3f")
+                if(sqnr < sqnrLow){
+                    sqnrLow = sqnr
+                }
                 dut.clock.step(10)
             }
-            println(s"SQNR: ${sqnrSum / RPCnt}")
+            if(sqnrLow > 50) {
+                println(shiftCombo)
+                println(f"SQNR LOW: ${sqnrLow}%.3f")
+                println(f"SQNR SUM: ${sqnrSum / RPCnt}%.3f dB")
+            }
+            sqnrSum = 0.0
+            sqnrLow = 100.0
+            }
         }  
     }
 }
