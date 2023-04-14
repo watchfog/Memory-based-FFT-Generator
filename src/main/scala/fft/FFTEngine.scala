@@ -350,28 +350,32 @@ class FFTEngine extends Module with DataConfig{
         sum
     }
 
-    val addrSBankSelKernelPrePre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => (0 until parallelCnt by 1).map(j => getBitSeqSum(addrS(i), parallelCnt, parallelCnt - 1 - j)))
-
-    val addrSBankSelKernelPre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => addrSBankSelKernelPrePre(i).fold(0.U)((x, y) => (x << 1) + y)).map(j => j(parallelCnt - 1, 0))
-
+    val addrTBankSelKernel = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt(parallelCnt.W)))
     val addrSBankSelKernel = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt(parallelCnt.W)))
 
-    val addrTBankSelKernelPrePre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => (0 until parallelCnt by 1).map(j => getBitSeqSum(addrT(i), parallelCnt, parallelCnt - 1 - j)))
+    if(parallelCnt == 1){
+        addrSBankSelKernel(0) := addrS(0).xorR
+        addrTBankSelKernel(0) := addrT(0).xorR
+    } else {
+        val addrSBankSelKernelPrePre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => (0 until parallelCnt by 1).map(j => getBitSeqSum(addrS(i), parallelCnt, parallelCnt - 1 - j)))
 
-    val addrTBankSelKernelPre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => addrTBankSelKernelPrePre(i).fold(0.U)((x, y) => (x << 1) + y)).map(j => j(parallelCnt - 1, 0))
+        val addrSBankSelKernelPre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => addrSBankSelKernelPrePre(i).fold(0.U)((x, y) => (x << 1) + y)).map(j => j(parallelCnt - 1, 0))
 
-    val addrTBankSelKernel = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt(parallelCnt.W)))
-    
-    for (i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
-        when(kernelState) {
-            addrSBankSelKernel(i) := addrSBankSelKernelPre(i)
-            addrTBankSelKernel(i) := addrTBankSelKernelPre(i)
-        } .otherwise {
-            addrSBankSelKernel(i) := (i * 2).U(parallelCnt.W)
-            addrTBankSelKernel(i) := (i * 2 + 1).U(parallelCnt.W)
+        val addrTBankSelKernelPrePre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => (0 until parallelCnt by 1).map(j => getBitSeqSum(addrT(i), parallelCnt, parallelCnt - 1 - j)))
+
+        val addrTBankSelKernelPre = (0 until pow(2, parallelCnt - 1).toInt by 1).map(i => addrTBankSelKernelPrePre(i).fold(0.U)((x, y) => (x << 1) + y)).map(j => j(parallelCnt - 1, 0))
+
+        for (i <- 0 until pow(2, parallelCnt - 1).toInt by 1) {
+            when(kernelState) {
+                addrSBankSelKernel(i) := addrSBankSelKernelPre(i)
+                addrTBankSelKernel(i) := addrTBankSelKernelPre(i)
+            } .otherwise {
+                addrSBankSelKernel(i) := (i * 2).U(parallelCnt.W)
+                addrTBankSelKernel(i) := (i * 2 + 1).U(parallelCnt.W)
+            }
         }
     }
-    
+
     val addrSBankSelProc = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
     val addrTBankSelProc = Wire(Vec(pow(2, parallelCnt - 1).toInt, UInt()))
     if(needProc) {
