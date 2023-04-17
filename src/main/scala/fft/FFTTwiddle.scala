@@ -26,30 +26,27 @@ class FFTTwiddle(mode: Int) extends RawModule with DataConfig{ //0 for proc
         val inits = times.map(t => FixedPoint.fromDouble(sin(t), (twiddleDataWidth + 2).W, (twiddleDataWidth + 0).BP))
         inits
     }
-   
-    val twi_cos_tb1_p10_pre = cosGen(fftLength / (if(mode == 0) 2 else 4))
-    val twi_sin_tb1_p10_pre = sinGen(fftLength / (if(mode == 0) 2 else 4))
 
-    val twi_cos_tb1_p10 = VecInit(twi_cos_tb1_p10_pre)
-    val twi_sin_tb1_p10 = VecInit(twi_sin_tb1_p10_pre)
+    val twiCosTable = VecInit(cosGen(fftLength / (if(mode == 0) 2 else 4)))
+    val twiSinTable = VecInit(sinGen(fftLength / (if(mode == 0) 2 else 4)))
 
-    val idx_r_pre = Mux(io.nk(addrWidth - mode), (~io.nk + 1.U), io.nk)(addrWidth - mode - 1, 0)
+    val indexRPre = Mux(io.nk(addrWidth - mode), (~io.nk + 1.U), io.nk)(addrWidth - mode - 1, 0)
 
-    val idx_r = Mux((idx_r_pre(addrWidth - mode - 1) & idx_r_pre(addrWidth - mode - 2, 0).orR), (~idx_r_pre + 1.U), idx_r_pre)(addrWidth - mode - 1, 0)
+    val indexR = Mux((indexRPre(addrWidth - mode - 1) & indexRPre(addrWidth - mode - 2, 0).orR), (~indexRPre + 1.U), indexRPre)(addrWidth - mode - 1, 0)
     
-    val lut_chg_sign_flag_r = idx_r_pre(addrWidth - mode - 1) & idx_r_pre(addrWidth - mode - 2, 0).orR
+    val lutSignFlagR = indexRPre(addrWidth - mode - 1) & indexRPre(addrWidth - mode - 2, 0).orR
 
-    val lut_w_r = twi_cos_tb1_p10(idx_r)
+    val lutWR = twi_cos_tb1_p10(idx_r)
 
-    val idx_i = idx_r(addrWidth - mode - 1, 0)
+    val indexI = idx_r(addrWidth - mode - 1, 0)
 
-    val lut_chg_sign_flag_i = !io.nk(addrWidth - mode)
+    val lutSignFlagI = !io.nk(addrWidth - mode)
 
-    val lut_w_i = twi_sin_tb1_p10(idx_i)
+    val lutWI = twi_sin_tb1_p10(indexI)
 
-    val chg_sign_flag_r = Mux((io.twiLutCaseIndex === 2.U), !lut_chg_sign_flag_r, lut_chg_sign_flag_r)
-    val chg_sign_flag_i = Mux((io.twiLutCaseIndex === 1.U), !lut_chg_sign_flag_i, lut_chg_sign_flag_i)
+    val signFlagR = Mux((io.twiLutCaseIndex === 2.U), !lutSignFlagR, lutSignFlagR)
+    val signFlagI = Mux((io.twiLutCaseIndex === 1.U), !lutSignFlagI, lutSignFlagI)
 
-    io.wR := Mux(chg_sign_flag_r, -lut_w_r, lut_w_r)
-    io.wI := Mux(chg_sign_flag_i, -lut_w_i, lut_w_i)
+    io.wR := Mux(signFlagR, -lutWR, lutWR)
+    io.wI := Mux(signFlagI, -lutWI, lutWI)
 }
