@@ -36,13 +36,13 @@ class FFTTwiddle(mode: Int) extends RawModule with DataConfig{ //0 for proc
     
     val lutSignFlagR = indexRPre(addrWidth - mode - 1) & indexRPre(addrWidth - mode - 2, 0).orR
 
-    val lutWR = twi_cos_tb1_p10(idx_r)
+    val lutWR = twiCosTable(indexR)
 
-    val indexI = idx_r(addrWidth - mode - 1, 0)
+    val indexI = indexR(addrWidth - mode - 1, 0)
 
     val lutSignFlagI = !io.nk(addrWidth - mode)
 
-    val lutWI = twi_sin_tb1_p10(indexI)
+    val lutWI = twiSinTable(indexI)
 
     val signFlagR = Mux((io.twiLutCaseIndex === 2.U), !lutSignFlagR, lutSignFlagR)
     val signFlagI = Mux((io.twiLutCaseIndex === 1.U), !lutSignFlagI, lutSignFlagI)
