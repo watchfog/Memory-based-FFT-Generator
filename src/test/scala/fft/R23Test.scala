@@ -126,8 +126,8 @@ class FFTR23Test extends AnyFreeSpec with ChiselScalatestTester with DataConfig 
                 val n2 = 2 * n + 1
                 val t1: Double = n1 * 2.0 * Pi / fftLength.toDouble
                 val t2: Double = n2 * 2.0 * Pi / fftLength.toDouble
-                var temp1 = (1 * sin(2 * t1) + 1 * cos(2 * t1) + 1 * sin(4 * t1) + 1 * cos(4 * t1) + 2) * pow(2, 6) * 1.1
-                var temp2 = (1 * sin(2 * t2) + 1 * cos(2 * t2) + 1 * sin(4 * t2) + 1 * cos(4 * t2) + 2) * pow(2, 6) * 1.1
+                var temp1 = (1 * sin(2 * t1) + 1 * cos(2 * t1) + 1 * sin(4 * t1) + 1 * cos(4 * t1) + 2) * pow(2, 7) * 1.1
+                var temp2 = (1 * sin(2 * t2) + 1 * cos(2 * t2) + 1 * sin(4 * t2) + 1 * cos(4 * t2) + 2) * pow(2, 7) * 1.1
                 var tempU = (1 * round(temp2.abs) * pow(2, fftDataWidth + 2) + 1 * round(temp1.abs)).toLong.asUInt
                 fftRefIn(2 * n) = new Complex(temp1.abs, 0)
                 fftRefIn(2 * n + 1) = new Complex(temp2.abs, 0)
